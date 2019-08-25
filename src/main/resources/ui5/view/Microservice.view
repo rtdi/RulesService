@@ -1,0 +1,15 @@
+<List
+	headerText="Rules for schema" items="{/schemas}" >
+	<headerToolbar>
+		<OverflowToolbar>
+            <ToolbarSpacer/>
+            <Button icon="sap-icon://add" type="Transparent" press="onAddSchema" enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+		</OverflowToolbar>
+	</headerToolbar>
+	<InputListItem label="Schema Name">
+		<HBox>
+			<Input value="{name}" enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+	        <Button icon="sap-icon://edit" type="Transparent" press="onConfigureRules" enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+	    </HBox>
+	</InputListItem>
+</List>
