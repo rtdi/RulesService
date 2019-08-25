@@ -1,0 +1,119 @@
+<t:TreeTable
+        id="TreeTable"
+        rows="{path:'/rules', parameters: {arrayNames:['rules']}}"
+        selectionMode="Single"
+        visibleRowCountMode="Auto"
+        enableSelectAll="false"
+        ariaLabelledBy="title">
+    <t:extension>
+        <Toolbar>
+            <Button text="Delete Rule" />
+             <ToolbarSpacer/>
+            <Button text="Collapse all" press="onCollapseAll"/>
+            <Button text="Collapse selection" press="onCollapseSelection"/>
+            <Button text="Expand first level" press="onExpandFirstLevel"/>
+            <Button text="Expand selection" press="onExpandSelection"/>
+      	</Toolbar>
+        <Toolbar>
+            <Label text="Drag one of the rule types over a column" />
+            <Button id="dragPrimitiveRule" text="Field Test">
+				<dragDropConfig>
+					<dnd:DragDropInfo
+						targetElement="TreeTable"
+						targetAggregation="rows"
+	                    dropEffect="Copy"
+	                    dragStart="onDragStart"
+	                    dragEnter="onDragEnter"
+	                    drop="onDrop"
+					/>
+				</dragDropConfig>
+			</Button>
+            <Button id="dragTestSetAll" text="Test All Rules">
+				<dragDropConfig>
+					<dnd:DragDropInfo
+						targetElement="TreeTable"
+						targetAggregation="rows"
+	                    dropEffect="Copy"
+	                    dragStart="onDragStart"
+	                    dragEnter="onDragEnter"
+	                    drop="onDrop"
+					/>
+				</dragDropConfig>
+			</Button>
+            <Button id="dragTestSetFirstFail" text="Test until first Fails">
+				<dragDropConfig>
+					<dnd:DragDropInfo
+						targetElement="TreeTable"
+						targetAggregation="rows"
+	                    dropEffect="Copy"
+	                    dragStart="onDragStart"
+	                    dragEnter="onDragEnter"
+	                    drop="onDrop"
+					/>
+				</dragDropConfig>
+			</Button>
+            <Button id="dragTestSetFirstPass" text="Test until first Passes">
+				<dragDropConfig>
+					<dnd:DragDropInfo
+						targetElement="TreeTable"
+						targetAggregation="rows"
+	                    dropEffect="Copy"
+	                    dragStart="onDragStart"
+	                    dragEnter="onDragEnter"
+	                    drop="onDrop"
+					/>
+				</dragDropConfig>
+			</Button>
+      	</Toolbar>
+    </t:extension>
+    <t:columns>
+        <t:Column>
+            <Label text="Fieldname"/>
+            <t:template>
+                <Text text="{fieldname}" wrapping="false" renderWhitespace="false" />
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="Rule Type"/>
+            <t:template>
+                <Text text="{path : 'type', formatter: '.ruletypeformatter'}" wrapping="false" renderWhitespace="false" />
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="Rule name"/>
+            <t:template>
+                <Input value="{rulename}" 
+                	visible="{path : 'type', formatter: '.rulenamevisibleformatter'}" 
+                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="Condition"/>
+            <t:template>
+                <Input value="{condition}" 
+                	visible="{path : 'type', formatter: '.conditionvisibleformatter'}" 
+                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="if test fails..."/>
+            <t:template>
+				<Select forceSelection="false" selectedKey="{iffalse}" 
+						visible="{path : 'type', formatter: '.conditionvisibleformatter'}" 
+						enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" >
+					<core:ListItem key="FAIL" text="Consider Failed" icon="sap-icon://message-warning"></core:ListItem>
+					<core:ListItem key="WARN" text="Consider Warning" icon="sap-icon://question-mark"></core:ListItem>
+					<core:ListItem key="PASS" text="Consider Passed" icon="sap-icon://message-success"></core:ListItem>
+				</Select>
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="Substitute with..."/>
+            <t:template>
+                <Input value="{substitute}" 
+                	visible="{path : 'type', formatter: '.conditionvisibleformatter'}" 
+                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            </t:template>
+        </t:Column>
+    </t:columns>
+</t:TreeTable>
