@@ -8,7 +8,12 @@
 	</headerToolbar>
 	<InputListItem label="Schema Name">
 		<HBox>
-			<Input value="{name}" enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            <ComboBox
+            	items="{schemas>/schemas}" 
+            	value="{name}" 
+            	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" >
+            	<core:Item key='{schemas>schemaname}' text='{schemas>schemaname}' />
+            </ComboBox>
 	        <Button icon="sap-icon://edit" type="Transparent" press="onConfigureRules" enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
 	    </HBox>
 	</InputListItem>

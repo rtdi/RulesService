@@ -53,6 +53,10 @@ public class SchemaRuleSet extends RecordRule {
 	public SchemaRuleSet createUIRuleTree(Schema schema) throws PropertiesException {
 		return createUIRuleTree(getFieldname(), schema, getRules());
 	}
+	
+	public void updateSchema(Schema schema) throws PropertiesException {
+		addFields(this, schema, getRules());
+	}
 
 	public static SchemaRuleSet createUIRuleTree(String fieldname, Schema schema, List<Rule<?>> originalrules) throws PropertiesException {
 		if (schema.getType() == Type.RECORD) {
@@ -72,7 +76,9 @@ public class SchemaRuleSet extends RecordRule {
 			throw new PropertiesException("Specified location exists and is no directory", null, 90005, directory.getAbsolutePath());
 		} else { 
 			File file = new File(directory.getAbsolutePath() + File.separatorChar + schemaname + ".json");
-			if (!file.canRead()) {
+			if (!file.exists()) {
+				// Do nothing if directory exists but file does not
+			} else if (!file.canRead()) {
 				throw new PropertiesException("Rules file is not read-able", "Check file permissions and users", 90005, file.getAbsolutePath());
 			} else {
 				try {
@@ -93,7 +99,7 @@ public class SchemaRuleSet extends RecordRule {
 		} else if (!directory.isDirectory()) {
 			throw new PropertiesException("Specified location exists and is no directory", null, 90005, directory.getAbsolutePath());
 		} else {
-			File file = new File(directory.getAbsolutePath() + File.separatorChar +schemaname + ".json");
+			File file = new File(directory.getAbsolutePath() + File.separatorChar + schemaname + ".json");
 			if (file.exists() && !file.canWrite()) { // Either the file does not exist or it exists and is write-able
 				throw new PropertiesException("Schema rule file is not write-able", "Check file permissions and users", 90005, file.getAbsolutePath());
 			} else {

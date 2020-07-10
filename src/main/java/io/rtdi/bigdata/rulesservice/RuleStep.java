@@ -40,13 +40,22 @@ public class RuleStep extends MicroServiceTransformation {
 		schemarules.put(s.getSchemaname(), s);
 	}
 
-	public SchemaRuleSet getSchemaRuleOrFail(String schemaname) throws ConnectorCallerException {
+	public SchemaRuleSet getSchemaRule(String schemaname) throws ConnectorCallerException {
 		if (schemarules != null) {
 			SchemaRuleSet r = schemarules.get(schemaname);
 			if (r != null) {
 				return r;
 			}
 		}
-		throw new ConnectorCallerException("No RuleSet found for this schema", null, schemaname);
+		return null;
+	}
+
+	public SchemaRuleSet getSchemaRuleOrFail(String schemaname) throws ConnectorCallerException {
+		SchemaRuleSet r = getSchemaRule(schemaname);
+		if (r == null) {
+			throw new ConnectorCallerException("No RuleSet found for this schema", null, "getSchemaRule() failed as there is no rule for this schema", schemaname);
+		} else {
+			return r;
+		}
 	}
 }

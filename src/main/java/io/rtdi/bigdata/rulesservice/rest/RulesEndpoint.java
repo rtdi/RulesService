@@ -1,5 +1,6 @@
 package io.rtdi.bigdata.rulesservice.rest;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,9 +49,13 @@ public class RulesEndpoint {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
 			ServiceController service = connector.getServiceOrFail(servicename);
-			MicroServiceTransformation m = service.getMicroserviceOrFail(microservicename);
-			RuleStep step = (RuleStep) m;
-			return Response.ok(new SchemaList(step)).build();
+			MicroServiceTransformation m = service.getMicroservice(microservicename);
+			if (m == null) {
+				return Response.ok(new SchemaList()).build();
+			} else {
+				RuleStep step = (RuleStep) m;
+				return Response.ok(new SchemaList(step)).build();
+			}
 		} catch (Exception e) {
 			return JAXBErrorResponseBuilder.getJAXBResponse(e);
 		}
@@ -68,12 +73,17 @@ public class RulesEndpoint {
 			ServiceController service = connector.getServiceOrFail(servicename);
 			MicroServiceTransformation m = service.getMicroserviceOrFail(microservicename);
 			RuleStep step = (RuleStep) m;
-			SchemaRuleSet data = step.getSchemaRuleOrFail(schemaname);
+			SchemaRuleSet data = step.getSchemaRule(schemaname);
 			SchemaHandler handler = connector.getPipelineAPI().getSchema(schemaname);
-			if (handler != null) {
-				return Response.ok(data.createUIRuleTree(handler.getValueSchema())).build();
+			if (handler == null) {
+				throw new ConnectorCallerException("No schema with that name exists", null, null, schemaname);
 			} else {
-				throw new ConnectorCallerException("No schema with that name exists", null, schemaname);
+				if (data == null) {
+					data = SchemaRuleSet.createUIRuleTree(schemaname, handler.getValueSchema(), null);
+				} else {
+					data.updateSchema(handler.getValueSchema());
+				}
+				return Response.ok(data).build();
 			}
 		} catch (Exception e) {
 			return JAXBErrorResponseBuilder.getJAXBResponse(e);
@@ -93,6 +103,19 @@ public class RulesEndpoint {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
 			ServiceController service = connector.getService(servicename);
+			MicroServiceTransformation m = service.getMicroserviceOrFail(microservicename);
+			RuleStep step = (RuleStep) m;
+			java.nio.file.Path p = service.getDirectory().toPath();
+			File directory = p.resolve(m.getName()).resolve(schemaname).toFile();
+			if (!directory.exists()) {
+				if (!directory.mkdirs()) {
+					throw new ConnectorCallerException("Cannot create directory for the microservice schema", null, null, directory.getAbsolutePath());
+				}
+			} else if (!directory.isDirectory()) {
+				throw new ConnectorCallerException("There is a file of that name already", null, null, directory.getAbsolutePath());
+			}
+			data.write(directory);
+			step.addSchemaRuleSet(data);
 			return JAXBSuccessResponseBuilder.getJAXBResponse("created");
 		} catch (Exception e) {
 			return JAXBErrorResponseBuilder.getJAXBResponse(e);
@@ -119,6 +142,9 @@ public class RulesEndpoint {
 	public static class SchemaList {
 
 		private List<SchemaNameEntity> schemas;
+
+		public SchemaList() {
+		}
 		
 		public SchemaList(RuleStep step) {
 			step.getSchemaRules().keySet();

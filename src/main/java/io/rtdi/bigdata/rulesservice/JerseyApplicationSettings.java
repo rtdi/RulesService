@@ -2,9 +2,9 @@ package io.rtdi.bigdata.rulesservice;
 
 import io.rtdi.bigdata.connector.connectorframework.JerseyApplication;
 
-public class JerseyApplicationRulesService extends JerseyApplication {
+public class JerseyApplicationSettings extends JerseyApplication {
 
-	public JerseyApplicationRulesService() {
+	public JerseyApplicationSettings() {
 		super();
 	}
 

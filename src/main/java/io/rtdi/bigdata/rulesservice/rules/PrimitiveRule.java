@@ -72,7 +72,9 @@ public class PrimitiveRule extends RuleWithName<Rule<?>> {
 	}
 
 	public void setCondition(String condition) {
-		this.condition = new PrimitiveMapping(condition);
+		if (condition != null) {
+			this.condition = new PrimitiveMapping(condition);
+		}
 	}
 
 	public RuleResult getIffalse() {
@@ -92,7 +94,9 @@ public class PrimitiveRule extends RuleWithName<Rule<?>> {
 	}
 
 	public void setSubstitute(String substitute) {
-		this.substitute = new PrimitiveMapping(substitute);
+		if (substitute != null) {
+			this.substitute = new PrimitiveMapping(substitute);
+		}
 	}
 
 	@Override

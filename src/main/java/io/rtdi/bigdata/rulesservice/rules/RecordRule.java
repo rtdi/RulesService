@@ -9,10 +9,11 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.IOUtils;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
+import io.rtdi.bigdata.connector.pipeline.foundation.avrodatatypes.AvroType;
 import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
+import io.rtdi.bigdata.connector.pipeline.foundation.utils.IOUtils;
 
 public class RecordRule extends Rule<Rule<?>> {
 	
@@ -90,9 +91,12 @@ public class RecordRule extends Rule<Rule<?>> {
 					childrule = new EmptyRule(fieldname);
 					break;
 				}
+				childrule.setFielddatatype(AvroType.getAvroDatatype(fieldschema));
 				rules.add(childrule);
 			} else {
-				rules.add(childrule.createUIRuleTree(fieldschema));
+				Rule<?> c = childrule.createUIRuleTree(fieldschema);
+				c.setFielddatatype(AvroType.getAvroDataType(fieldschema).toString());
+				rules.add(c);
 			}
 			
 		}

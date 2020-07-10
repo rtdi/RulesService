@@ -36,7 +36,8 @@ public class RulesServiceIT {
 	@Test
 	public void testRulesService() {
 		try {
-			ConnectorController connectorcontroller = new ConnectorController(api, new RulesServiceFactory(), "./src/test/resources/tmp", null);
+			ConnectorController connectorcontroller = new ConnectorController(new RulesServiceFactory(), "./src/test/resources/tmp", null);
+			connectorcontroller.setAPI(api);
 			RulesServiceProperties properties = new RulesServiceProperties("RulesTest1");
 			properties.setSourceTopic("SALES");
 			properties.setTargetTopic("SALES_CLEANSED");

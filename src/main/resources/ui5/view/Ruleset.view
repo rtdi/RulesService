@@ -14,57 +14,6 @@
             <Button text="Expand first level" press="onExpandFirstLevel"/>
             <Button text="Expand selection" press="onExpandSelection"/>
       	</Toolbar>
-        <Toolbar>
-            <Label text="Drag one of the rule types over a column" />
-            <Button id="dragPrimitiveRule" text="Field Test">
-				<dragDropConfig>
-					<dnd:DragDropInfo
-						targetElement="TreeTable"
-						targetAggregation="rows"
-	                    dropEffect="Copy"
-	                    dragStart="onDragStart"
-	                    dragEnter="onDragEnter"
-	                    drop="onDrop"
-					/>
-				</dragDropConfig>
-			</Button>
-            <Button id="dragTestSetAll" text="Test All Rules">
-				<dragDropConfig>
-					<dnd:DragDropInfo
-						targetElement="TreeTable"
-						targetAggregation="rows"
-	                    dropEffect="Copy"
-	                    dragStart="onDragStart"
-	                    dragEnter="onDragEnter"
-	                    drop="onDrop"
-					/>
-				</dragDropConfig>
-			</Button>
-            <Button id="dragTestSetFirstFail" text="Test until first Fails">
-				<dragDropConfig>
-					<dnd:DragDropInfo
-						targetElement="TreeTable"
-						targetAggregation="rows"
-	                    dropEffect="Copy"
-	                    dragStart="onDragStart"
-	                    dragEnter="onDragEnter"
-	                    drop="onDrop"
-					/>
-				</dragDropConfig>
-			</Button>
-            <Button id="dragTestSetFirstPass" text="Test until first Passes">
-				<dragDropConfig>
-					<dnd:DragDropInfo
-						targetElement="TreeTable"
-						targetAggregation="rows"
-	                    dropEffect="Copy"
-	                    dragStart="onDragStart"
-	                    dragEnter="onDragEnter"
-	                    drop="onDrop"
-					/>
-				</dragDropConfig>
-			</Button>
-      	</Toolbar>
     </t:extension>
     <t:columns>
         <t:Column>
@@ -76,14 +25,24 @@
         <t:Column>
             <Label text="Rule Type"/>
             <t:template>
-                <Text text="{path : 'type', formatter: '.ruletypeformatter'}" wrapping="false" renderWhitespace="false" />
+				<Select
+					forceSelection="false"
+					visible="{= (${fielddatatype} !== 'ARRAY' &amp;&amp; ${fielddatatype} !== 'RECORD') }"
+					selectedKey="{type}"
+					change=".onChangeRuleType" >
+					<core:Item key="EmptyRule" text="----" />
+					<core:Item key="PrimitiveRule" text="Test a column" />
+					<core:Item key="TestSetAll" text="Test for all conditions" />
+					<core:Item key="TestSetFirstFail" text="Test until one failed" />
+					<core:Item key="TestSetFirstPass" text="Test until one passes" />
+				</Select>
             </t:template>
         </t:Column>
         <t:Column>
             <Label text="Rule name"/>
             <t:template>
                 <Input value="{rulename}" 
-                	visible="{path : 'type', formatter: '.rulenamevisibleformatter'}" 
+                	visible="{= (${fielddatatype} !== 'ARRAY' &amp;&amp; ${fielddatatype} !== 'RECORD') &amp;&amp; ${type} !== 'EmptyRule' }" 
                 	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
             </t:template>
         </t:Column>
@@ -91,7 +50,7 @@
             <Label text="Condition"/>
             <t:template>
                 <Input value="{condition}" 
-                	visible="{path : 'type', formatter: '.conditionvisibleformatter'}" 
+                	visible="{= ${type} === 'PrimitiveRule' }" 
                 	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
             </t:template>
         </t:Column>
@@ -99,7 +58,7 @@
             <Label text="if test fails..."/>
             <t:template>
 				<Select forceSelection="false" selectedKey="{iffalse}" 
-						visible="{path : 'type', formatter: '.conditionvisibleformatter'}" 
+						visible="{= ${type} === 'PrimitiveRule' }" 
 						enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" >
 					<core:ListItem key="FAIL" text="Consider Failed" icon="sap-icon://message-warning"></core:ListItem>
 					<core:ListItem key="WARN" text="Consider Warning" icon="sap-icon://question-mark"></core:ListItem>
@@ -111,7 +70,7 @@
             <Label text="Substitute with..."/>
             <t:template>
                 <Input value="{substitute}" 
-                	visible="{path : 'type', formatter: '.conditionvisibleformatter'}" 
+                	visible="{= ${type} === 'PrimitiveRule' }" 
                 	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
             </t:template>
         </t:Column>

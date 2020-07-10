@@ -24,88 +24,49 @@ edit : function(oEvent) {
 save : function(oEvent) {
 	var oModel = this.getView().getModel();
 	var sServicename = jQuery.sap.getUriParameters().get("servicename");
-	var sMicroservicename = jQuery.sap.getUriParameters().get("miroservicename");
+	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
+	var sSchemaname = jQuery.sap.getUriParameters().get("schema");
 	if (!!sSchemaname) {
 		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("POST", "../rest/fileschemas/" + encodeURI(sConnectionname) + "/" + encodeURI(sSchemaname));
+		xmlhttp.open("POST", "../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname));
 		xmlhttp.setRequestHeader("Content-Type", "application/json");
+		var that = this;
 		xmlhttp.onreadystatechange = function() {
 		    if (xmlhttp.readyState == 4) {
 		    	if (xmlhttp.status == 200) {
-		        	alert(xmlhttp.responseText);
-		    	} else {
-		    		alert(xmlhttp.responseText);
-		    	}
+			        that.displaySuccess(JSON.parse(xmlhttp.responseText));
+			    } else {
+			        that.displayError(JSON.parse(xmlhttp.responseText));
+			    }
 		    }
 		}
 		xmlhttp.send(oModel.getJSON());
 	} else {
-		alert("No name of the schema entered");
+		sap.m.MessageToast.show("No name of the schema entered");
 	}
 },
 cancel : function(oEvent) {
 },
 onAddSchema : function(oEvent) {
 },
-onConfigureRules : function(oEvent) {
-	var path = oEvent.getSource().getBindingContext().getPath();
-	var oModel = this.getView().getModel();
-	var obj = oModel.getProperty(path);
-	var sServicename = jQuery.sap.getUriParameters().get("servicename");
-	var sMicroservicename = jQuery.sap.getUriParameters().get("miroservicename");
-	window.location.href = './Ruleset?servicename=' + encodeURI(sServicename) + '&microservice=' + encodeURI(sMicroservicename) + '&schema=' + encodeURI(obj.name);
-},
-ruletypeformatter : function(name) {
-	if (name === "EmptyRule") {
-		return "";
-	} else if (name === "ArrayRule") {
-		return "";
-	} else if (name === "RecordRule") {
-		return "";
+onChangeRuleType: function(oEvent) {
+	var oTargetModel = this.getView().getModel();
+	var oRulePath = oEvent.getParameter("selectedItem").getBindingContext().getPath();
+	var oTargetRow = oTargetModel.getProperty(oRulePath);
+	var sRuleType = oTargetRow.type;
+	var oSourceControl = oEvent.getSource();
+	if (sRuleType === 'EmptyRule' || sRuleType === 'PrimitiveRule') {
+		oTargetModel.setProperty(oRulePath + "/rules", null);
 	} else {
-		return name;
+		var oChildRules = oTargetModel.getProperty(oRulePath + "/rules");
+		var oTableRow = oSourceControl.getParent();
+		var oTreeTable = this.getView().byId("TreeTable");
+		var rowindex = oTreeTable.indexOfRow(oTableRow);
+		if (!oChildRules || oChildRules.length === 0) {
+			oTargetModel.setProperty(oRulePath + "/rules", [ { fieldname: oTargetRow.fieldname, type: 'PrimitiveRule' } ] );
+		}
+		oTreeTable.expand(rowindex);
 	}
-},
-rulenamevisibleformatter : function(name) {
-	if (name === "EmptyRule") {
-		return false;
-	} else if (name === "ArrayRule") {
-		return false;
-	} else if (name === "RecordRule") {
-		return false;
-	} else {
-		return true;
-	}
-},
-conditionvisibleformatter : function(name) {
-	if (name === "PrimitiveRule") {
-		return true;
-	} else {
-		return false;
-	}
-},
-onDragStart: function(oEvent) {
-	var oDraggedControl = oEvent.getParameter("target");
-	if (oDraggedControl.getId() === "dsd") {
-        oEvent.preventDefault();
-    }
-},
-onDragEnter: function(oEvent) {
-	var oDraggedControl = oEvent.getParameter("target");
-	if (oDraggedControl.getId() === "dsd") {
-        oEvent.preventDefault();
-    }
-},
-onDrop: function(oEvent) {
-	var sDropPosition = oEvent.getParameter("dropPosition");
-	var oDraggedControl = oEvent.getParameter("draggedControl");
-	var oDroppedControl = oEvent.getParameter("droppedControl");
-	sap.m.MessageToast.show(
-		oDraggedControl.getId() + 
-		" is dropped " + 
-		sDropPosition + 
-		" the " + 
-		oDroppedControl.getId()
-	);
+	
 }
 

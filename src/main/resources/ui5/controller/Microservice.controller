@@ -1,5 +1,5 @@
 showFooter : function() {
-	return true;
+	return false;
 },
 init : function() {
 	var oModel = new JSONModel();
@@ -8,6 +8,7 @@ init : function() {
 	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
 	oModel.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename));
 	this.getView().setModel(oModel);
+	
 
 	var oStateModel = this.getView().getModel("state");
 	oStateModel.setProperty("/title", "Define Schema rules");
@@ -16,34 +17,25 @@ init : function() {
 		{"text" : "Services", "link" : "./Services"}, 
 		{"text" : "Service", "link" : "./Service?servicename=" + encodeURI(sServicename) }
 	] );
+	
+	var oModelSchemas = new JSONModel();
+	oModelSchemas.setSizeLimit(1000);
+	oModelSchemas.loadData("../rest/schemas");
+	this.getView().setModel(oModelSchemas, "schemas");
+	
 },
 edit : function(oEvent) {
 },
-save : function(oEvent) {
-	var oModel = this.getView().getModel();
-	var sServicename = jQuery.sap.getUriParameters().get("servicename");
-	var sMicroservicename = jQuery.sap.getUriParameters().get("miroservicename");
-	if (!!sSchemaname) {
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("POST", "../rest/fileschemas/" + encodeURI(sConnectionname) + "/" + encodeURI(sSchemaname));
-		xmlhttp.setRequestHeader("Content-Type", "application/json");
-		xmlhttp.onreadystatechange = function() {
-		    if (xmlhttp.readyState == 4) {
-		    	if (xmlhttp.status == 200) {
-		        	alert(xmlhttp.responseText);
-		    	} else {
-		    		alert(xmlhttp.responseText);
-		    	}
-		    }
-		}
-		xmlhttp.send(oModel.getJSON());
-	} else {
-		alert("No name of the schema entered");
-	}
-},
-cancel : function(oEvent) {
-},
 onAddSchema : function(oEvent) {
+	var oModel = this.getView().getModel();
+	var oNewEntry = { name: "" };
+	var aSchemas = oModel.getProperty("/schemas");
+	if (aSchemas) {
+		aSchemas.push(oNewEntry);
+	} else {
+		aSchemas = [ oNewEntry ];
+	}
+	oModel.setProperty("/schemas", aSchemas);
 },
 onConfigureRules : function(oEvent) {
 	var path = oEvent.getSource().getBindingContext().getPath();

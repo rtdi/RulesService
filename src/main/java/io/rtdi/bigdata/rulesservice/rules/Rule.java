@@ -29,7 +29,8 @@ import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesExcept
 })
 public abstract class Rule<R extends Rule<?>> {
 	private String fieldname;
-	private List<R> rules = null; 
+	private List<R> rules = null;
+	private String fielddatatype;
 	
 	public Rule() {
 		super();
@@ -73,5 +74,13 @@ public abstract class Rule<R extends Rule<?>> {
 	}
 
 	protected abstract Rule<?> createUIRuleTree(Schema fieldschema) throws PropertiesException;
+
+	public String getFielddatatype() {
+		return fielddatatype;
+	}
+
+	public void setFielddatatype(String fielddatatype) {
+		this.fielddatatype = fielddatatype;
+	}
 	
 }
