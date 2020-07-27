@@ -59,7 +59,7 @@ public class RulesServiceFactory extends ConnectorFactory<ConnectionProperties, 
 	}
 
 	@Override
-	public ServiceProperties<?> createServiceProperties(String servicename) throws PropertiesException {
+	public ServiceProperties createServiceProperties(String servicename) throws PropertiesException {
 		return new RulesServiceProperties(servicename);
 	}
 

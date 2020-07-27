@@ -1,6 +1,6 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
-public abstract class RuleWithName<R extends Rule<?>> extends Rule<R> {
+public abstract class RuleWithName extends Rule {
 	private String rulename;
 
 	public RuleWithName() {
@@ -18,6 +18,24 @@ public abstract class RuleWithName<R extends Rule<?>> extends Rule<R> {
 
 	public void setRulename(String rulename) {
 		this.rulename = rulename;
+	}
+
+	@Override
+	protected String getRulePath() {
+		if (rulepath == null) {
+			return rulename;
+		} else {
+			return rulepath;
+		}
+	}
+
+	@Override
+	public void setParentPath(String parentpath) {
+		if (parentpath != null) {
+			rulepath = parentpath + "/" + getRulename();
+		} else {
+			rulepath = getRulename();
+		}
 	}
 
 }

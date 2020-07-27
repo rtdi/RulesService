@@ -9,10 +9,7 @@
         <Toolbar>
             <Button text="Delete Rule" />
              <ToolbarSpacer/>
-            <Button text="Collapse all" press="onCollapseAll"/>
-            <Button text="Collapse selection" press="onCollapseSelection"/>
-            <Button text="Expand first level" press="onExpandFirstLevel"/>
-            <Button text="Expand selection" press="onExpandSelection"/>
+            <Button text="Validate" press="onValidate"/>
       	</Toolbar>
     </t:extension>
     <t:columns>
@@ -20,6 +17,12 @@
             <Label text="Fieldname"/>
             <t:template>
                 <Text text="{fieldname}" wrapping="false" renderWhitespace="false" />
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="Sample value"/>
+            <t:template>
+                <Text text="{samplevalue}" />
             </t:template>
         </t:Column>
         <t:Column>
@@ -51,6 +54,8 @@
             <t:template>
                 <Input value="{condition}" 
                 	visible="{= ${type} === 'PrimitiveRule' }" 
+                	valueState="{= (${conditionerror} ? 'Error' : 'None') }"
+                	valueStateText="{conditionerror}"
                 	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
             </t:template>
         </t:Column>
@@ -71,7 +76,17 @@
             <t:template>
                 <Input value="{substitute}" 
                 	visible="{= ${type} === 'PrimitiveRule' }" 
+                	valueState="{= (${substituteerror} ? 'Error' : 'None') }"
+                	valueStateText="{substituteerror}"
+                	tooltip="{substituteresult}"
                 	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            </t:template>
+        </t:Column>
+        <t:Column>
+            <Label text="Test Result"/>
+            <t:template>
+                <Button text="{sampleresult}" icon="{path: 'sampleresult', formatter: '.resulttypeFormatter'}"
+                	visible="{= (${sampleresult} !== null &amp;&amp; (${type} === 'PrimitiveRule' || ${type}.startsWith('TestSet'))) }" />
             </t:template>
         </t:Column>
     </t:columns>

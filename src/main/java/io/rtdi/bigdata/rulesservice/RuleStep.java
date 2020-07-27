@@ -1,61 +1,40 @@
 package io.rtdi.bigdata.rulesservice;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
-import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
 import io.rtdi.bigdata.connector.pipeline.foundation.MicroServiceTransformation;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
+import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 
 public class RuleStep extends MicroServiceTransformation {
-	private Map<String, SchemaRuleSet> schemarules = new HashMap<>();
+	private SchemaRuleSet rs;
 
 	public RuleStep(String name) {
 		super(name);
+		rs = new SchemaRuleSet();
+	}
+
+	public RuleStep(File dir) throws PropertiesException {
+		this(dir.getName());
+		rs = new SchemaRuleSet(dir);
 	}
 
 	@Override
 	public JexlRecord applyImpl(JexlRecord valuerecord) throws IOException {
-		String schemaname = valuerecord.getSchema().getName();
-		SchemaRuleSet ruleset = schemarules.get(schemaname);
-		if (ruleset == null) {
+		if (rs.getRules() != null) {
+			return rs.apply(valuerecord);
+		} else {
 			return valuerecord;
-		} else {
-			return ruleset.apply(valuerecord);
 		}
 	}
 
-	public SchemaRuleSet createSchemaRuleSet(String schema) {
-		SchemaRuleSet set = new SchemaRuleSet(schema);
-		schemarules.put(schema, set);
-		return set;
+	public SchemaRuleSet getSchemaRule() {
+		return rs;
 	}
 
-	public Map<String, SchemaRuleSet> getSchemaRules() {
-		return schemarules;
+	public void setSchemaRuleSet(SchemaRuleSet data) {
+		rs = data;
 	}
 
-	public void addSchemaRuleSet(SchemaRuleSet s) {
-		schemarules.put(s.getSchemaname(), s);
-	}
-
-	public SchemaRuleSet getSchemaRule(String schemaname) throws ConnectorCallerException {
-		if (schemarules != null) {
-			SchemaRuleSet r = schemarules.get(schemaname);
-			if (r != null) {
-				return r;
-			}
-		}
-		return null;
-	}
-
-	public SchemaRuleSet getSchemaRuleOrFail(String schemaname) throws ConnectorCallerException {
-		SchemaRuleSet r = getSchemaRule(schemaname);
-		if (r == null) {
-			throw new ConnectorCallerException("No RuleSet found for this schema", null, "getSchemaRule() failed as there is no rule for this schema", schemaname);
-		} else {
-			return r;
-		}
-	}
 }

@@ -1,5 +1,6 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,13 +10,18 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
 import io.rtdi.bigdata.connector.pipeline.foundation.avrodatatypes.AvroType;
 import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
+import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PipelineCallerException;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 import io.rtdi.bigdata.connector.pipeline.foundation.utils.IOUtils;
 
-public class RecordRule extends Rule<Rule<?>> {
+@JsonIgnoreProperties(ignoreUnknown=true)
+public class RecordRule extends Rule {
 	
 	public RecordRule() {
 		super();
@@ -25,10 +31,6 @@ public class RecordRule extends Rule<Rule<?>> {
 		super(fieldname);
 	}
 
-	public void addRule(String fieldname, String ruleset, String rulename, String testname, String condition, RuleResult iffalse, String substitute) {
-		addRule(new TestSetFirstPass(fieldname, ruleset, new PrimitiveRule(fieldname, rulename, condition, iffalse, substitute)));
-	}
-
 	public ArrayRule addNested(String fieldname) {
 		ArrayRule arrayrule = new ArrayRule(fieldname);
 		addRule(arrayrule);
@@ -36,13 +38,15 @@ public class RecordRule extends Rule<Rule<?>> {
 	}
 	
 	@Override
-	public RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) {
-		for ( Rule<?> rule : getRules()) {
-			rule.apply(valuerecord, ruleresults);
+	public RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) throws IOException {
+		if (getRules() != null) {
+			for ( Rule rule : getRules()) {
+				rule.apply(valuerecord, ruleresults);
+			}
 		}
 		return null;
 	}
-	
+		
 	@Override
 	public String toString() {
 		return "RecordRule \"" + getFieldname() + "\" tests this record";
@@ -53,20 +57,20 @@ public class RecordRule extends Rule<Rule<?>> {
 		return createUIRuleTree(getFieldname(), schema, getRules());
 	}
 	
-	public static RecordRule createUIRuleTree(String fieldname, Schema schema, List<Rule<?>> originalrules) throws PropertiesException {
+	public static RecordRule createUIRuleTree(String fieldname, Schema schema, List<Rule> originalrules) throws PropertiesException {
 		if (schema.getType() == Type.RECORD) {
 			RecordRule r = new RecordRule(fieldname);
 			addFields(r, schema, originalrules);
 			return r;
 		} else {
-			throw new PropertiesException("Provided Schema is not a record schema", (String) null, null, schema.getName());
+			throw new PropertiesException("Provided Schema is not a record schema", (String) null, schema.getName());
 		}
 	}
 	
-	protected static void addFields(RecordRule r, Schema schema, List<Rule<?>> originalrules) throws PropertiesException {
-		Map<String, Rule<?>> fieldnameindex = new HashMap<>();
+	protected static void addFields(RecordRule r, Schema schema, List<Rule> originalrules) throws PropertiesException {
+		Map<String, Rule> fieldnameindex = new HashMap<>();
 		if (originalrules != null) {
-			for (Rule<?> o : originalrules) {
+			for (Rule o : originalrules) {
 				String fieldname = o.getFieldname();
 				fieldnameindex.put(fieldname, o);
 			}
@@ -74,11 +78,11 @@ public class RecordRule extends Rule<Rule<?>> {
 		/*
 		 * The Rule array is built using the schema as basis to preserve the schema's field order 
 		 */
-		List<Rule<?>> rules = new ArrayList<>();
+		List<Rule> rules = new ArrayList<>();
 		for (Field field : schema.getFields()) {
 			Schema fieldschema = IOUtils.getBaseSchema(field.schema());
 			String fieldname = field.name();
-			Rule<?> childrule = fieldnameindex.get(fieldname);
+			Rule childrule = fieldnameindex.get(fieldname);
 			if (childrule == null) {
 				switch (fieldschema.getType()) {
 				case ARRAY:
@@ -91,16 +95,50 @@ public class RecordRule extends Rule<Rule<?>> {
 					childrule = new EmptyRule(fieldname);
 					break;
 				}
-				childrule.setFielddatatype(AvroType.getAvroDatatype(fieldschema));
+				childrule.setDataType(AvroType.getAvroDataType(fieldschema));
 				rules.add(childrule);
 			} else {
-				Rule<?> c = childrule.createUIRuleTree(fieldschema);
-				c.setFielddatatype(AvroType.getAvroDataType(fieldschema).toString());
+				Rule c = childrule.createUIRuleTree(fieldschema);
+				c.setDataType(AvroType.getAvroDataType(fieldschema));
 				rules.add(c);
 			}
 			
 		}
 		r.setRules(rules);
+	}
+
+	@Override
+	public void assignSamplevalue(JexlRecord sampledata) {
+		if (sampledata != null && this.getRules() != null) {
+			for ( Rule r : this.getRules()) {
+				r.assignSamplevalue(sampledata);
+			}
+		}
+	}
+
+	@Override
+	public String getSamplevalue() {
+		return null;
+	}
+
+	@Override
+	public RuleResult getSampleresult() throws PipelineCallerException {
+		return null;
+	}
+
+	@Override
+	public RuleResult validateRule(JexlRecord valuerecord) {
+		if (valuerecord != null && this.getRules() != null) {
+			for ( Rule r : this.getRules()) {
+				r.validateRule(valuerecord);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	protected Rule createNewInstance() throws ConnectorCallerException {
+		return new RecordRule(getFieldname());
 	}
 
 }

@@ -7,6 +7,30 @@ init : function() {
 	var sServicename = jQuery.sap.getUriParameters().get("servicename");
 	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
 	var sSchemaname = jQuery.sap.getUriParameters().get("schema");
+	oModel.attachRequestFailed(function(oEvent) {
+			that.displayError(JSON.parse(oEvent.getParameter("responseText")));
+	});
+	oModel.attachRequestCompleted(function(oEvent) {
+		var aRules = oModel.getProperty("/rules");
+		if (oEvent.getParameters("success")) {
+			var fAddNew = function(aEntries, sPath) {
+				if (aEntries) {
+					for (var i = 0; i < aEntries.length; i++) {
+						fAddNew(aEntries[i].rules, sPath + "/" + i + "/rules");
+						if (aEntries[i].type.startsWith("TestSet")) {
+							if (aEntries[i].rules) {
+								aEntries[i].rules.push({fieldname: aEntries[i].fieldname, type: "EmptyRule"});
+							} else {
+								aEntries[i].rules = [{fieldname: aEntries[i].fieldname, type: "EmptyRule"}];
+							}
+						}
+					}
+					oModel.setProperty(sPath, aEntries);
+				}
+			};
+			fAddNew(aRules, "/rules");
+		}
+	});
 	oModel.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname));
 	this.getView().setModel(oModel);
 
@@ -15,8 +39,7 @@ init : function() {
 	oStateModel.setProperty("/breadcrumbs", [ 
 		{"text" : "Homepage", "link" : "./Home"}, 
 		{"text" : "Services", "link" : "./Services"}, 
-		{"text" : "Service", "link" : "./Service?servicename=" + encodeURI(sServicename) },
-		{"text" : "MicroService", "link" : "./Microservice?servicename=" + encodeURI(sServicename) + "&microservice=" + encodeURI(sMicroservicename) }
+		{"text" : "Service", "link" : "./Service?servicename=" + encodeURI(sServicename) }
 	] );
 },
 edit : function(oEvent) {
@@ -55,6 +78,22 @@ onChangeRuleType: function(oEvent) {
 	var oTargetRow = oTargetModel.getProperty(oRulePath);
 	var sRuleType = oTargetRow.type;
 	var oSourceControl = oEvent.getSource();
+	var sParentPath = oRulePath.substring(0, oRulePath.lastIndexOf("/rules/"));
+	if (sParentPath && sParentPath.length > 0) {
+		/*
+		 * Within a TestSet, there should be always at least on additional item to enter a new rule
+		 */
+		var oParentControl = oTargetModel.getProperty(sParentPath);
+		if (oParentControl.type.startsWith("TestSet")) {
+			if (oParentControl.rules && oParentControl.rules.length > 0) {
+				var oLastEntity = oParentControl.rules[oParentControl.rules.length-1];
+				if (oLastEntity.type !== "EmptyRule") {
+					oTargetModel.setProperty(sParentPath + "/rules/" + oParentControl.rules.length,
+						{fieldname: oParentControl.fieldname, type: "EmptyRule"});
+				}
+			}
+		}
+	}
 	if (sRuleType === 'EmptyRule' || sRuleType === 'PrimitiveRule') {
 		oTargetModel.setProperty(oRulePath + "/rules", null);
 	} else {
@@ -63,10 +102,46 @@ onChangeRuleType: function(oEvent) {
 		var oTreeTable = this.getView().byId("TreeTable");
 		var rowindex = oTreeTable.indexOfRow(oTableRow);
 		if (!oChildRules || oChildRules.length === 0) {
-			oTargetModel.setProperty(oRulePath + "/rules", [ { fieldname: oTargetRow.fieldname, type: 'PrimitiveRule' } ] );
+			oTargetModel.setProperty(oRulePath + "/rules",
+					[ { fieldname: oTargetRow.fieldname, type: 'PrimitiveRule' },
+					 { fieldname: oTargetRow.fieldname, type: 'EmptyRule' } ] );
 		}
 		oTreeTable.expand(rowindex);
 	}
-	
+},
+onValidate: function(oEvent) {
+	var oModel = this.getView().getModel();
+	var sServicename = jQuery.sap.getUriParameters().get("servicename");
+	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
+	var sSchemaname = jQuery.sap.getUriParameters().get("schema");
+	if (!!sSchemaname) {
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.open("POST", "../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname) + "/validate");
+		xmlhttp.setRequestHeader("Content-Type", "application/json");
+		var that = this;
+		xmlhttp.onreadystatechange = function() {
+		    if (xmlhttp.readyState == 4) {
+		    	if (xmlhttp.status == 200) {
+		    		oModel.setJSON(xmlhttp.responseText);
+			    } else {
+			        that.displayError(JSON.parse(xmlhttp.responseText));
+			    }
+		    }
+		}
+		xmlhttp.send(oModel.getJSON());
+	} else {
+		sap.m.MessageToast.show("No name of the schema entered");
+	}
+},
+resulttypeFormatter : function(sResulttype) {
+	if (sResulttype === "PASS") {
+		return "sap-icon://message-success";
+	} else if (sResulttype === "FAIL") {
+		return "sap-icon://message-warning";
+	} else if (sResulttype === "WARN") {
+		return "sap-icon://question-mark";
+	} else {
+		return "sap-icon://message-error";
+	}
 }
 

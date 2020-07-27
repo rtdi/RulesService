@@ -15,6 +15,8 @@ import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
 import io.rtdi.bigdata.connectors.pipeline.kafkadirect.KafkaAPIdirect;
 import io.rtdi.bigdata.connectors.pipeline.kafkadirect.KafkaConnectionProperties;
 import io.rtdi.bigdata.rulesservice.rules.ArrayRule;
+import io.rtdi.bigdata.rulesservice.rules.PrimitiveRule;
+import io.rtdi.bigdata.rulesservice.rules.TestSetFirstPass;
 
 public class RulesServiceIT {
 	private PipelineAbstract<?,?,?,?> api;
@@ -44,20 +46,21 @@ public class RulesServiceIT {
 			ServiceController servicecontroller = new ServiceController(properties , connectorcontroller);
 			connectorcontroller.addChild(properties.getName(), servicecontroller);
 			
-			RuleStep rulestep = properties.createRuleStep("Step1");
-			SchemaRuleSet ruleset = rulestep.createSchemaRuleSet("SalesOrder");
+			RuleStep rulestep = new RuleStep("Step1");
+			properties.addMicroService("schema1", rulestep);
+			SchemaRuleSet ruleset = rulestep.getSchemaRule();
 			
-			ruleset.addRule("SoldTo", "Test SoldTo column", "Test1", "SoldTo is not null", "SoldTo != null", RuleResult.FAIL, null);
-			ruleset.addRule("BillTo", "Test BillTo column", "Test1", "BillTo is not null", "BillTo != null", RuleResult.FAIL, null);
+			ruleset.addRule(new TestSetFirstPass("SoldTo", "Test SoldTo column", new PrimitiveRule("Test1", "SoldTo is not null", "SoldTo != null", RuleResult.FAIL, null)));
+			ruleset.addRule(new TestSetFirstPass("BillTo", "Test BillTo column", new PrimitiveRule("Test1", "BillTo is not null", "BillTo != null", RuleResult.FAIL, null)));
 			ArrayRule c = ruleset.addNested("SalesItems");
-			c.addRule("MaterialNumber", "Check material not null", "Test1", "MaterialNumber is not null", "MaterialNumber != null", RuleResult.FAIL, null);
-			c.addRule("Quantity", "Check qty not null", "Test1", "QTY is not null", "Quantity != null", RuleResult.FAIL, null);
+			c.addRule(new TestSetFirstPass("MaterialNumber", "Check material not null", new PrimitiveRule("Test1", "MaterialNumber is not null", "MaterialNumber != null", RuleResult.FAIL, null)));
+			c.addRule(new TestSetFirstPass("Quantity", "Check qty not null", new PrimitiveRule("Test1", "QTY is not null", "Quantity != null", RuleResult.FAIL, null)));
 			
 			File dir = new File("./src/test/resources/tmp/services");
 			if (!dir.exists()) {
 				dir.mkdir();
 			}
-			properties.write(dir);
+			properties.write(dir, null);
 			
 			RulesServiceProperties properties2 = new RulesServiceProperties("RulesTest1");
 			properties2.read(dir);
