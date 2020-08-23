@@ -1,13 +1,13 @@
-name: CI
+name: Release
 
 on: 
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
-    name: Upload Release Asset
+    name: Release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@main
