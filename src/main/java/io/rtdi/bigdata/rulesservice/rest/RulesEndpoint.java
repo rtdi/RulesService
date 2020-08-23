@@ -35,6 +35,8 @@ import io.rtdi.bigdata.connector.connectorframework.servlet.ServletSecurityConst
 import io.rtdi.bigdata.connector.pipeline.foundation.IPipelineAPI;
 import io.rtdi.bigdata.connector.pipeline.foundation.MicroServiceTransformation;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaHandler;
+import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
+import io.rtdi.bigdata.connector.pipeline.foundation.TopicName;
 import io.rtdi.bigdata.connector.pipeline.foundation.TopicPayload;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
 import io.rtdi.bigdata.rulesservice.RuleStep;
@@ -84,7 +86,7 @@ public class RulesEndpoint {
 			MicroServiceTransformation m = service.getMicroserviceOrFail(schemaname, microservicename);
 			RuleStep step = (RuleStep) m;
 			SchemaRuleSet data = step.getSchemaRule();
-			SchemaHandler handler = connector.getPipelineAPI().getSchema(schemaname);
+			SchemaHandler handler = connector.getPipelineAPI().getSchema(SchemaRegistryName.create(schemaname));
 			if (handler == null) {
 				throw new ConnectorCallerException("No schema with that name exists", null, null, schemaname);
 			} else {
@@ -143,7 +145,7 @@ public class RulesEndpoint {
 			String cachekey = topicname + "_" + schemaname;
 			JexlRecord sampledata = cache.getIfPresent(cachekey);
 			if (sampledata == null) {
-				List<TopicPayload> l = api.getLastRecords(topicname, System.currentTimeMillis()-3600000L, 1, schemaname);
+				List<TopicPayload> l = api.getAllRecordsSince(TopicName.create(topicname), System.currentTimeMillis()-3600000L, 1, SchemaRegistryName.create(schemaname));
 				if (l != null && l.size() != 0) {
 					sampledata = l.get(0).getValueRecord();
 				}

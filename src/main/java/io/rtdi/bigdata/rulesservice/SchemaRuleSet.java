@@ -62,7 +62,7 @@ public class SchemaRuleSet extends RecordRule {
 			addFields(r, schema, originalrules);
 			return r;
 		} else {
-			throw new PropertiesException("Provided Schema is not a record schema", (String) null, schema.getName());
+			throw new PropertiesException("Provided Schema is not a record schema", (String) null, schema.getFullName());
 		}
 	}
 

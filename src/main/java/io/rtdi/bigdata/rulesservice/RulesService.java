@@ -16,6 +16,7 @@ import io.rtdi.bigdata.connector.connectorframework.controller.ServiceController
 import io.rtdi.bigdata.connector.pipeline.foundation.IPipelineAPI;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaConstants;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaHandler;
+import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
 import io.rtdi.bigdata.connector.pipeline.foundation.entity.ServiceEntity;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.SchemaException;
@@ -34,7 +35,7 @@ public class RulesService extends Service {
 		IPipelineAPI<?, ?, ?, ?> api = controller.getPipelineAPI();
 		if (props.getSchemaTransformations() != null) {
 			for (String schema : props.getSchemaTransformations().keySet()) {
-				SchemaHandler handler = api.getSchema(schema);
+				SchemaHandler handler = api.getSchema(SchemaRegistryName.create(schema));
 				Schema valueschema = handler.getValueSchema();
 				if (valueschema.getField(ValueSchema.AUDIT) == null) {
 					api.registerSchema(handler.getSchemaName(), null, handler.getKeySchema(), createNewSchemaVersion(valueschema));
