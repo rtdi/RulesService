@@ -41,7 +41,7 @@ public class TestSetFirstPass extends TestSet {
 	}
 	
 	@Override
-	protected RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
+	public RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
 		/*
 		 * Needs to go through all rules instead of exit early, else the other rules are not evaluated and hence their result is not displayed. 
 		 */

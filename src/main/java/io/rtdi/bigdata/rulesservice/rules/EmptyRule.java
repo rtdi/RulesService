@@ -36,6 +36,7 @@ public class EmptyRule extends Rule {
 	}
 
 	@Override
+	public
 	void assignSamplevalue(JexlRecord sampledata) {
 		this.value = sampledata.get(getFieldname());
 	}
@@ -51,7 +52,7 @@ public class EmptyRule extends Rule {
 	}
 
 	@Override
-	protected RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
+	public RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
 		return null;
 	}
 

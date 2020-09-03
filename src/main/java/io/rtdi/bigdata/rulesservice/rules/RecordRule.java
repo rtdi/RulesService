@@ -40,8 +40,13 @@ public class RecordRule extends Rule {
 	@Override
 	public RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) throws IOException {
 		if (getRules() != null) {
-			for ( Rule rule : getRules()) {
-				rule.apply(valuerecord, ruleresults);
+			if (getFieldname() != null) {
+				Object o = valuerecord.get(getFieldname());
+				if (o instanceof JexlRecord) {
+					for ( Rule rule : getRules()) {
+						rule.apply((JexlRecord) o, ruleresults);
+					}
+				}
 			}
 		}
 		return null;
@@ -79,39 +84,46 @@ public class RecordRule extends Rule {
 		 * The Rule array is built using the schema as basis to preserve the schema's field order 
 		 */
 		List<Rule> rules = new ArrayList<>();
-		for (Field field : schema.getFields()) {
-			Schema fieldschema = IOUtils.getBaseSchema(field.schema());
-			String fieldname = field.name();
-			Rule childrule = fieldnameindex.get(fieldname);
-			if (childrule == null) {
-				switch (fieldschema.getType()) {
-				case ARRAY:
-					childrule = ArrayRule.createUIRuleTree(fieldname, fieldschema, null);
-					break;
-				case RECORD:
-					childrule = createUIRuleTree(fieldname, fieldschema, null);
-					break;
-				default:
-					childrule = new EmptyRule(fieldname);
-					break;
+		if (schema.getType() == Type.RECORD) {
+			for (Field field : schema.getFields()) {
+				Schema fieldschema = IOUtils.getBaseSchema(field.schema());
+				String fieldname = field.name();
+				Rule childrule = fieldnameindex.get(fieldname);
+				if (childrule == null) {
+					switch (fieldschema.getType()) {
+					case ARRAY:
+						childrule = ArrayRule.createUIRuleTree(fieldname, fieldschema, null);
+						break;
+					case RECORD:
+						childrule = createUIRuleTree(fieldname, fieldschema, null);
+						break;
+					default:
+						childrule = new EmptyRule(fieldname);
+						break;
+					}
+					childrule.setDataType(AvroType.getAvroDataType(fieldschema));
+					rules.add(childrule);
+				} else {
+					Rule c = childrule.createUIRuleTree(fieldschema);
+					c.setDataType(AvroType.getAvroDataType(fieldschema));
+					rules.add(c);
 				}
-				childrule.setDataType(AvroType.getAvroDataType(fieldschema));
-				rules.add(childrule);
-			} else {
-				Rule c = childrule.createUIRuleTree(fieldschema);
-				c.setDataType(AvroType.getAvroDataType(fieldschema));
-				rules.add(c);
+				
 			}
-			
+			r.setRules(rules);
 		}
-		r.setRules(rules);
 	}
 
 	@Override
 	public void assignSamplevalue(JexlRecord sampledata) {
 		if (sampledata != null && this.getRules() != null) {
-			for ( Rule r : this.getRules()) {
-				r.assignSamplevalue(sampledata);
+			if (getFieldname() != null) {
+				Object o = sampledata.get(getFieldname());
+				if (o instanceof JexlRecord) {
+					for ( Rule r : this.getRules()) {
+						r.assignSamplevalue((JexlRecord) o);
+					}
+				}
 			}
 		}
 	}
@@ -129,8 +141,13 @@ public class RecordRule extends Rule {
 	@Override
 	public RuleResult validateRule(JexlRecord valuerecord) {
 		if (valuerecord != null && this.getRules() != null) {
-			for ( Rule r : this.getRules()) {
-				r.validateRule(valuerecord);
+			if (getFieldname() != null) {
+				Object o = valuerecord.get(getFieldname());
+				if (o instanceof JexlRecord) {
+					for ( Rule r : this.getRules()) {
+						r.validateRule((JexlRecord) o);
+					}
+				}
 			}
 		}
 		return null;
