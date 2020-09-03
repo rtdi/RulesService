@@ -37,7 +37,7 @@ public class TestSetAll extends TestSet {
 	}
 
 	@Override
-	protected RuleResult validateRule(JexlRecord valuerecord) {
+	public RuleResult validateRule(JexlRecord valuerecord) {
 		sampleresult = RuleResult.PASS;
 		for ( Rule rule : getRules()) {
 			RuleResult r = rule.validateRule(valuerecord);

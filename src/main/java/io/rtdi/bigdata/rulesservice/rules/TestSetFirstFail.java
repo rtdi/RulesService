@@ -43,7 +43,7 @@ public class TestSetFirstFail extends TestSet {
 	}
 	
 	@Override
-	protected RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
+	public RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
 		/*
 		 * Needs to evaluate all rules to display their result. A rule aggregation with Failed is always Failed, so we are fine here. 
 		 */

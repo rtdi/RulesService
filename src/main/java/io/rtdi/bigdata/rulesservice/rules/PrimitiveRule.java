@@ -20,7 +20,7 @@ import io.rtdi.bigdata.connector.pipeline.foundation.recordbuilders.ValueSchema;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class PrimitiveRule extends RuleWithName {
 	private PrimitiveMapping condition;
-	private RuleResult iffalse = RuleResult.PASS;
+	private RuleResult iffalse = RuleResult.FAIL;
 	private PrimitiveMapping substitute;
 	private Object value;
 	private RuleResult sampleresult;
@@ -99,7 +99,7 @@ public class PrimitiveRule extends RuleWithName {
 	}
 	
 	@Override
-	protected RuleResult validateRule(JexlRecord valuerecord) {
+	public RuleResult validateRule(JexlRecord valuerecord) {
 		sampleresult = null;
 		if (condition != null) {
 			try {

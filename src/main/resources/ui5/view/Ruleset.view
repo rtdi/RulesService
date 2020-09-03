@@ -7,8 +7,24 @@
         ariaLabelledBy="title">
     <t:extension>
         <Toolbar>
-            <Button text="Delete Rule" />
-             <ToolbarSpacer/>
+			<Select
+				items="{ path: 'schemarules>/schemas',
+						sorter: [
+							{path: 'configured', descending: true},
+							{path: 'schemaname'}
+						]
+					   }"
+				enabled="{= ${state>/roles/config} &amp;&amp; !${state>/locked} }"
+				id="schemaselector"
+				forceSelection="false"
+				change="onSchemaChange">
+				<core:ListItem
+					key="{schemarules>schemaname}"
+					text="{schemarules>schemaname}"
+					icon="{path: 'schemarules>configured', formatter: '.schemaIconFormatter' } " />
+			</Select>
+              <ToolbarSpacer/>
+            <Button text="Delete Rule" press="onDelete" />
             <Button text="Validate" press="onValidate"/>
       	</Toolbar>
     </t:extension>

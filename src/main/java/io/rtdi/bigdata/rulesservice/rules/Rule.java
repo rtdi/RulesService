@@ -124,13 +124,13 @@ public abstract class Rule {
 		rulepath = parentpath;
 	}
 
-	abstract void assignSamplevalue(JexlRecord record);
+	public abstract void assignSamplevalue(JexlRecord record);
 
 	public abstract Object getSamplevalue() throws IOException;
 
 	public abstract RuleResult getSampleresult() throws IOException;
 
-	protected abstract RuleResult validateRule(JexlRecord valuerecord);
+	public abstract RuleResult validateRule(JexlRecord valuerecord);
 
 	public String getSampleresulterror() {
 		return sampleresulterror;

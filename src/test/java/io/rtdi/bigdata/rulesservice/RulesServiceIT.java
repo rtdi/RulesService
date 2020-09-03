@@ -11,6 +11,7 @@ import org.junit.Test;
 import io.rtdi.bigdata.connector.connectorframework.controller.ConnectorController;
 import io.rtdi.bigdata.connector.connectorframework.controller.ServiceController;
 import io.rtdi.bigdata.connector.pipeline.foundation.PipelineAbstract;
+import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
 import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
 import io.rtdi.bigdata.connectors.pipeline.kafkadirect.KafkaAPIdirect;
 import io.rtdi.bigdata.connectors.pipeline.kafkadirect.KafkaConnectionProperties;
@@ -47,8 +48,8 @@ public class RulesServiceIT {
 			connectorcontroller.addChild(properties.getName(), servicecontroller);
 			
 			RuleStep rulestep = new RuleStep("Step1");
-			properties.addMicroService("schema1", rulestep);
-			SchemaRuleSet ruleset = rulestep.getSchemaRule();
+			properties.addMicroService(rulestep);
+			SchemaRuleSet ruleset = rulestep.getSchemaRule(SchemaRegistryName.create("schema1"));
 			
 			ruleset.addRule(new TestSetFirstPass("SoldTo", "Test SoldTo column", new PrimitiveRule("Test1", "SoldTo is not null", "SoldTo != null", RuleResult.FAIL, null)));
 			ruleset.addRule(new TestSetFirstPass("BillTo", "Test BillTo column", new PrimitiveRule("Test1", "BillTo is not null", "BillTo != null", RuleResult.FAIL, null)));

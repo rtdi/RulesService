@@ -6,7 +6,6 @@ init : function() {
 	var that = this;
 	var sServicename = jQuery.sap.getUriParameters().get("servicename");
 	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
-	var sSchemaname = jQuery.sap.getUriParameters().get("schema");
 	oModel.attachRequestFailed(function(oEvent) {
 			that.displayError(JSON.parse(oEvent.getParameter("responseText")));
 	});
@@ -31,16 +30,25 @@ init : function() {
 			fAddNew(aRules, "/rules");
 		}
 	});
-	oModel.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname));
 	this.getView().setModel(oModel);
 
 	var oStateModel = this.getView().getModel("state");
+	oStateModel.setProperty("/locked", false);
 	oStateModel.setProperty("/title", "Define Schema rules");
 	oStateModel.setProperty("/breadcrumbs", [ 
 		{"text" : "Homepage", "link" : "./Home"}, 
 		{"text" : "Services", "link" : "./Services"}, 
 		{"text" : "Service", "link" : "./Service?servicename=" + encodeURI(sServicename) }
 	] );
+	
+	var oModelConfiguredSchemas = new JSONModel();
+	oModelConfiguredSchemas.attachRequestFailed(function(oEvent) {
+			that.displayError(JSON.parse(oEvent.getParameter("responseText")));
+	});
+	oModelConfiguredSchemas.setSizeLimit(1000);
+	oModelConfiguredSchemas.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename));
+	this.getView().setModel(oModelConfiguredSchemas, "schemarules");
+	
 },
 edit : function(oEvent) {
 },
@@ -48,7 +56,8 @@ save : function(oEvent) {
 	var oModel = this.getView().getModel();
 	var sServicename = jQuery.sap.getUriParameters().get("servicename");
 	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
-	var sSchemaname = jQuery.sap.getUriParameters().get("schema");
+	var oSchemaControl = this.getView().byId("schemaselector");
+	var sSchemaname = oSchemaControl.getSelectedKey();
 	if (!!sSchemaname) {
 		var xmlhttp = new XMLHttpRequest();
 		xmlhttp.open("POST", "../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname));
@@ -58,6 +67,8 @@ save : function(oEvent) {
 		    if (xmlhttp.readyState == 4) {
 		    	if (xmlhttp.status == 200) {
 			        that.displaySuccess(JSON.parse(xmlhttp.responseText));
+					var oStateModel = that.getView().getModel("state");
+					oStateModel.setProperty("/locked", false);
 			    } else {
 			        that.displayError(JSON.parse(xmlhttp.responseText));
 			    }
@@ -65,12 +76,28 @@ save : function(oEvent) {
 		}
 		xmlhttp.send(oModel.getJSON());
 	} else {
-		sap.m.MessageToast.show("No name of the schema entered");
+		this.displayError({ text: "No name of the schema entered" } );
 	}
 },
 cancel : function(oEvent) {
+	var oSchemaControl = this.getView().byId("schemaselector");
+	var sSchemaname = oSchemaControl.getSelectedKey();
+	var oStateModel = this.getView().getModel("state");
+	oStateModel.setProperty("/locked", false);
+	this._loadSchemaData(sSchemaname);
 },
-onAddSchema : function(oEvent) {
+onSchemaChange : function(oEvent) {
+	var sSchemaname = oEvent.getParameter("selectedItem").getKey();
+	this._loadSchemaData(sSchemaname);
+},
+_loadSchemaData : function(sSchemaname) {
+	var oModel = this.getView().getModel();
+	var sServicename = jQuery.sap.getUriParameters().get("servicename");
+	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
+	if (!!sSchemaname) {
+		oModel.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname));
+		oModel.refresh();
+	}
 },
 onChangeRuleType: function(oEvent) {
 	var oTargetModel = this.getView().getModel();
@@ -108,12 +135,15 @@ onChangeRuleType: function(oEvent) {
 		}
 		oTreeTable.expand(rowindex);
 	}
+	var oStateModel = this.getView().getModel("state");
+	oStateModel.setProperty("/locked", true);
 },
 onValidate: function(oEvent) {
 	var oModel = this.getView().getModel();
 	var sServicename = jQuery.sap.getUriParameters().get("servicename");
 	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
-	var sSchemaname = jQuery.sap.getUriParameters().get("schema");
+	var oSchemaControl = this.getView().byId("schemaselector");
+	var sSchemaname = oSchemaControl.getSelectedKey();
 	if (!!sSchemaname) {
 		var xmlhttp = new XMLHttpRequest();
 		xmlhttp.open("POST", "../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname) + "/validate");
@@ -123,6 +153,7 @@ onValidate: function(oEvent) {
 		    if (xmlhttp.readyState == 4) {
 		    	if (xmlhttp.status == 200) {
 		    		oModel.setJSON(xmlhttp.responseText);
+		    		that.displaySuccess( { text: "Tests completed" } );
 			    } else {
 			        that.displayError(JSON.parse(xmlhttp.responseText));
 			    }
@@ -130,7 +161,7 @@ onValidate: function(oEvent) {
 		}
 		xmlhttp.send(oModel.getJSON());
 	} else {
-		sap.m.MessageToast.show("No name of the schema entered");
+		that.displayError( { message: "No name of the schema entered" } );
 	}
 },
 resulttypeFormatter : function(sResulttype) {
@@ -142,6 +173,13 @@ resulttypeFormatter : function(sResulttype) {
 		return "sap-icon://question-mark";
 	} else {
 		return "sap-icon://message-error";
+	}
+},
+schemaIconFormatter : function(bConfigured) {
+	if (bConfigured) {
+		return "sap-icon://accept";
+	} else {
+		return null;
 	}
 }
 

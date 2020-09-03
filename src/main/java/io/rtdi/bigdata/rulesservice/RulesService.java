@@ -14,9 +14,9 @@ import org.apache.avro.Schema.Field;
 import io.rtdi.bigdata.connector.connectorframework.Service;
 import io.rtdi.bigdata.connector.connectorframework.controller.ServiceController;
 import io.rtdi.bigdata.connector.pipeline.foundation.IPipelineAPI;
+import io.rtdi.bigdata.connector.pipeline.foundation.MicroServiceTransformation;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaConstants;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaHandler;
-import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
 import io.rtdi.bigdata.connector.pipeline.foundation.entity.ServiceEntity;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.SchemaException;
@@ -33,12 +33,15 @@ public class RulesService extends Service {
 		 */
 		RulesServiceProperties props = (RulesServiceProperties) controller.getServiceProperties();
 		IPipelineAPI<?, ?, ?, ?> api = controller.getPipelineAPI();
-		if (props.getSchemaTransformations() != null) {
-			for (String schema : props.getSchemaTransformations().keySet()) {
-				SchemaHandler handler = api.getSchema(SchemaRegistryName.create(schema));
-				Schema valueschema = handler.getValueSchema();
-				if (valueschema.getField(ValueSchema.AUDIT) == null) {
-					api.registerSchema(handler.getSchemaName(), null, handler.getKeySchema(), createNewSchemaVersion(valueschema));
+		if (props.getMicroserviceTransformations() != null) {
+			for (MicroServiceTransformation microservice : props.getMicroserviceTransformations()) {
+				RuleStep rulestep = (RuleStep) microservice;
+				for (SchemaRuleSet rs : rulestep.getSchemaRules().values()) {
+					SchemaHandler handler = api.getSchema(rs.getSchemaName());
+					Schema valueschema = handler.getValueSchema();
+					if (valueschema.getField(ValueSchema.AUDIT) == null) {
+						api.registerSchema(handler.getSchemaName(), null, handler.getKeySchema(), createNewSchemaVersion(valueschema));
+					}
 				}
 			}
 		}
@@ -76,9 +79,12 @@ public class RulesService extends Service {
 		Map<String, Set<String>> producertopics = new HashMap<>();
 		Set<String> usedschemas = new HashSet<>();
 		
-		if (props.getSchemaTransformations() != null) {
-			for ( String schema : props.getSchemaTransformations().keySet()) {
-				usedschemas.add(schema);
+		if (props.getMicroserviceTransformations() != null) {
+			for ( MicroServiceTransformation microservice : props.getMicroserviceTransformations()) {
+				RuleStep rulestep = (RuleStep) microservice;
+				for (SchemaRuleSet rs : rulestep.getSchemaRules().values()) {
+					usedschemas.add(rs.getSchemaName().getName());
+				}
 			}
 			
 			producertopics.put(props.getTargetTopic(), usedschemas);

@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
@@ -12,6 +14,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -39,6 +42,7 @@ import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
 import io.rtdi.bigdata.connector.pipeline.foundation.TopicName;
 import io.rtdi.bigdata.connector.pipeline.foundation.TopicPayload;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
+import io.rtdi.bigdata.connector.pipeline.foundation.utils.FileNameEncoder;
 import io.rtdi.bigdata.rulesservice.RuleStep;
 import io.rtdi.bigdata.rulesservice.SchemaRuleSet;
 
@@ -66,32 +70,62 @@ public class RulesEndpoint {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
 			ServiceController service = connector.getServiceOrFail(servicename);
-			return Response.ok(new SchemaList(service.getSchemas())).build();
+			return Response.ok(new MicroserviceList(service.getMicroservices())).build();
 		} catch (Exception e) {
 			return JAXBErrorResponseBuilder.getJAXBResponse(e);
 		}
 	}
 
 	@GET
-	@Path("/rules/{servicename}/{schemaname}/{microservicename}")
+	@Path("/rules/{servicename}/{microservicename}")
     @Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed(ServletSecurityConstants.ROLE_VIEW)
-    public Response getRules(
-    		@PathParam("servicename") String servicename, 
-    		@PathParam("schemaname") String schemaname,
+    public Response getRuleSchemas(
+    		@PathParam("servicename") String servicename,
     		@PathParam("microservicename") String microservicename) {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
 			ServiceController service = connector.getServiceOrFail(servicename);
-			MicroServiceTransformation m = service.getMicroserviceOrFail(schemaname, microservicename);
-			RuleStep step = (RuleStep) m;
-			SchemaRuleSet data = step.getSchemaRule();
+			/*
+			 * In case this is a brand new microservice, it is not attached to the step yet.
+			 */
+			MicroServiceTransformation m = service.getMicroservice(microservicename);
+			Collection<SchemaRuleSet> existingschemas = null;
+			if (m != null) {
+				RuleStep step = (RuleStep) m;
+				Map<String, SchemaRuleSet> data = step.getSchemaRules();
+				existingschemas = data.values();
+			}
+			SchemaListNameEntity ret = new SchemaListNameEntity(connector.getPipelineAPI(), existingschemas);
+			return Response.ok(ret).build();
+		} catch (Exception e) {
+			return JAXBErrorResponseBuilder.getJAXBResponse(e);
+		}
+	}
+
+	@GET
+	@Path("/rules/{servicename}/{microservicename}/{schemaname}")
+    @Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed(ServletSecurityConstants.ROLE_VIEW)
+    public Response getRules(
+    		@PathParam("servicename") String servicename,
+    		@PathParam("microservicename") String microservicename, 
+    		@PathParam("schemaname") String schemaname) {
+		try {
+			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
+			ServiceController service = connector.getServiceOrFail(servicename);
+			MicroServiceTransformation m = service.getMicroservice(microservicename);
+			SchemaRuleSet data = null;
+			if (m != null) {
+				RuleStep step = (RuleStep) m;
+				data = step.getSchemaRule(SchemaRegistryName.create(schemaname));
+			}
 			SchemaHandler handler = connector.getPipelineAPI().getSchema(SchemaRegistryName.create(schemaname));
 			if (handler == null) {
 				throw new ConnectorCallerException("No schema with that name exists", null, null, schemaname);
 			} else {
 				if (data == null) {
-					data = SchemaRuleSet.createUIRuleTree(schemaname, handler.getValueSchema(), null);
+					data = SchemaRuleSet.createUIRuleTree(SchemaRegistryName.create(schemaname), schemaname, handler.getValueSchema(), null);
 				} else {
 					data.updateSchema(handler.getValueSchema());
 				}
@@ -110,12 +144,12 @@ public class RulesEndpoint {
 	}
 
 	@POST
-	@Path("/rules/{servicename}/{schemaname}/{microservicename}/validate")
+	@Path("/rules/{servicename}/{microservicename}/{schemaname}/validate")
     @Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed(ServletSecurityConstants.ROLE_VIEW)
     public Response getValidation(@PathParam("servicename") String servicename, 
-    		@PathParam("schemaname") String schemaname,
     		@PathParam("microservicename") String microservicename, 
+    		@PathParam("schemaname") String schemaname,
     		SchemaRuleSet data) {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
@@ -146,10 +180,10 @@ public class RulesEndpoint {
 			JexlRecord sampledata = cache.getIfPresent(cachekey);
 			if (sampledata == null) {
 				List<TopicPayload> l = api.getAllRecordsSince(TopicName.create(topicname), System.currentTimeMillis()-3600000L, 1, SchemaRegistryName.create(schemaname));
-				if (l != null && l.size() != 0) {
+				if (l != null && l.size() != 0) { // might be that the schema has no data in this topic
 					sampledata = l.get(0).getValueRecord();
+					cache.put(cachekey, sampledata);
 				}
-				cache.put(cachekey, sampledata);
 			}
 			
 			return sampledata;
@@ -159,21 +193,26 @@ public class RulesEndpoint {
 	}
 
 	@POST
-	@Path("/rules/{servicename}/{schemaname}/{microservicename}")
+	@Path("/rules/{servicename}/{microservicename}/{schemaname}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed(ServletSecurityConstants.ROLE_CONFIG)
     public Response setRules(@PathParam("servicename") String servicename, 
-    		@PathParam("schemaname") String schemaname, 
     		@PathParam("microservicename") String microservicename, 
+    		@PathParam("schemaname") String schemaname, 
     		SchemaRuleSet data) {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
 			ServiceController service = connector.getService(servicename);
-			MicroServiceTransformation m = service.getMicroserviceOrFail(schemaname, microservicename);
-			RuleStep step = (RuleStep) m;
+			MicroServiceTransformation m = service.getMicroservice(microservicename);
+			RuleStep step;
+			if (m == null) {
+				m = new RuleStep(microservicename);
+				service.getServiceProperties().addMicroService(m);
+			}
+			step = (RuleStep) m;
 			java.nio.file.Path p = service.getDirectory().toPath();
-			File directory = p.resolve(schemaname).resolve(m.getName()).toFile();
+			File directory = p.resolve(FileNameEncoder.encodeName(m.getName())).toFile();
 			if (!directory.exists()) {
 				if (!directory.mkdirs()) {
 					throw new ConnectorCallerException("Cannot create directory for the microservice schema", null, null, directory.getAbsolutePath());
@@ -181,16 +220,20 @@ public class RulesEndpoint {
 			} else if (!directory.isDirectory()) {
 				throw new ConnectorCallerException("There is a file of that name already", null, null, directory.getAbsolutePath());
 			}
-			data.write(directory);
-			step.setSchemaRuleSet(data);
+			if (data != null) {
+				SchemaRegistryName name = SchemaRegistryName.create(schemaname);
+				data.setSchemaName(name);
+				data.write(directory);
+				step.addSchemaRuleSet(data);
+			}
 			return JAXBSuccessResponseBuilder.getJAXBResponse("created");
 		} catch (Exception e) {
 			return JAXBErrorResponseBuilder.getJAXBResponse(e);
 		}
 	}
 
-	/* @DELETE
-	@Path("/rules/{servicename}/{schemaname}/{microservicename}")
+	@DELETE
+	@Path("/rules/{servicename}/{microservicename}/{schemaname}")
     @Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed(ServletSecurityConstants.ROLE_CONFIG)
     public Response deleteRules(@PathParam("servicename") String servicename, 
@@ -199,40 +242,43 @@ public class RulesEndpoint {
 		try {
 			ConnectorController connector = WebAppController.getConnectorOrFail(servletContext);
 			ServiceController service = connector.getServiceOrFail(servicename);
-			connector.removeService(service);
+			RuleStep microservice = (RuleStep) service.getMicroserviceOrFail(microservicename);
+			java.nio.file.Path p = service.getDirectory().toPath();
+			File directory = p.resolve(schemaname).resolve(microservice.getName()).toFile();
+			microservice.deleteSchemaRuleSetDefinition(SchemaRegistryName.create(schemaname), directory);
 			return JAXBSuccessResponseBuilder.getJAXBResponse("deleted");
 		} catch (Exception e) {
 			return JAXBErrorResponseBuilder.getJAXBResponse(e);
 		}
-	} */
+	}
 
-	public static class SchemaList {
+	public static class MicroserviceList {
 
-		private List<SchemaNameEntity> schemas;
+		private List<MicroserviceNameEntity> schemas;
 
-		public SchemaList() {
+		public MicroserviceList() {
 		}
 		
-		public SchemaList(Set<String> schemalist) {
-			if (schemalist != null) {
+		public MicroserviceList(Set<MicroServiceTransformation> set) {
+			if (set != null) {
 				this.schemas = new ArrayList<>();
-				for (String s : schemalist) {
-					this.schemas.add(new SchemaNameEntity(s));
+				for (MicroServiceTransformation s : set) {
+					this.schemas.add(new MicroserviceNameEntity(s.getName()));
 				}
 			}
 		}
 		
-		public List<SchemaNameEntity> getSchemas() {
+		public List<MicroserviceNameEntity> getSchemas() {
 			return schemas;
 		}
 		
 	}
 	
-	public static class SchemaNameEntity {
+	public static class MicroserviceNameEntity {
 
 		private String name;
 
-		public SchemaNameEntity(String name) {
+		public MicroserviceNameEntity(String name) {
 			this.name = name;
 		}
 
