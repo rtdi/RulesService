@@ -124,7 +124,10 @@ public class SchemaRuleSet extends RecordRule {
 				try {
 				    RecordRule pg = mapper.readValue(file, SchemaRuleSet.class);
 				    pg.postSerialization();
-			        addAll(pg.getRules());
+				    if (pg.getRules() != null) {
+				    	// A file without a rule should not throw an exception
+				    	addAll(pg.getRules());
+				    }
 				} catch (PropertiesException e) {
 					throw e; // to avoid nesting the exception
 				} catch (IOException e) {

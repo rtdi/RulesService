@@ -47,13 +47,19 @@ The first step is to connect the application to a Kafka server, in this example 
 
 Each Service is a Kakfa KStream, a distributed process listening on a topic and validating the data. Hence the first setting of each service are the input and output topic names to use.
 
-Within one rule service for each schema multiple steps can be performed, a microservice transformation so to speak. These transformation steps happen within the service. For example the first microservice step might standardize on the different spellings of the field STATUS. The result of this step is then put into another step, validating if the STATUS is valid and consistent with other data. In the screen schemas are added and then the step names - they are executed in named order.
+Within one rule service for each schema multiple steps can be performed, a microservice transformation so to speak. These transformation steps happen within the service. For example the first microservice step might check missing data, the next standardize on the different spellings. The result of this step is then put into a third step, validating if the STATUS is valid and consistent with other data.
 
 <img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleDefinition-Level1.png" width="50%">
 
-Once the structure is saved, by clicking on the individual steps the rules themselves are defined. The structure of the schema with all its nesting elements are shown and rules can be defined for each field.
+Once the structure is saved, by clicking on the individual steps the rules themselves are defined.
 
-An example would be a rule on the STATUS column, which must contain the values Ordered, Confirmed, InProduction or Completed. One way would be a a single rule on the column with a OR condition. The other option would be five rules testing for a single status value only and the group is "Test until first Passes". 
+Because a topic can contain data for multiple schemas, the rules are defined for each schema individually. If the message schema has no rules defined, it is passed through unchanged.
+
+<img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleDefinition-Level2.png" width="50%">
+
+After a schema has been selected, its structure with all nested elements is shown and rules can be defined for each field.
+
+An example would be a rule on the OrderStatus column, which must contain the values C (..Completed) or N (..New). One way would be a a single rule on the column with a OR condition. The other option would be five rules testing for a single status value only and the test type is "Test until first Passes". 
 
 <img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleDefinition-Level3.png" width="50%">
 

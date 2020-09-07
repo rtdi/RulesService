@@ -7,9 +7,11 @@ init : function() {
 	var sServicename = jQuery.sap.getUriParameters().get("servicename");
 	var sMicroservicename = jQuery.sap.getUriParameters().get("microservice");
 	oModel.attachRequestFailed(function(oEvent) {
+			that.getView().byId("TreeTable").setBusy(false);
 			that.displayError(JSON.parse(oEvent.getParameter("responseText")));
 	});
 	oModel.attachRequestCompleted(function(oEvent) {
+		that.getView().byId("TreeTable").setBusy(false);
 		var aRules = oModel.getProperty("/rules");
 		if (oEvent.getParameters("success")) {
 			var fAddNew = function(aEntries, sPath) {
@@ -45,6 +47,25 @@ init : function() {
 	oModelConfiguredSchemas.attachRequestFailed(function(oEvent) {
 			that.displayError(JSON.parse(oEvent.getParameter("responseText")));
 	});
+	oModelConfiguredSchemas.attachRequestCompleted(function(oEvent) {
+		if (oEvent.getParameters("success")) {
+			if (oModelConfiguredSchemas.getData() && oModelConfiguredSchemas.getData().schemas && oModelConfiguredSchemas.getData().schemas.length > 0) {
+				var sFirstSchema;
+				for ( var i = 0; i < oModelConfiguredSchemas.getData().schemas.length; i++) {
+					var oSchema = oModelConfiguredSchemas.getData().schemas[i];
+					if (oSchema.configured) {
+						sFirstSchema = oSchema.schemaname;
+						break;
+					}
+				}
+				if (sFirstSchema) {
+					var oSchemaControl = that.getView().byId("schemaselector");
+					oSchemaControl.setSelectedKey(sFirstSchema);
+					that._loadSchemaData(sFirstSchema);
+				}
+			}
+		}
+	});
 	oModelConfiguredSchemas.setSizeLimit(1000);
 	oModelConfiguredSchemas.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename));
 	this.getView().setModel(oModelConfiguredSchemas, "schemarules");
@@ -69,6 +90,7 @@ save : function(oEvent) {
 			        that.displaySuccess(JSON.parse(xmlhttp.responseText));
 					var oStateModel = that.getView().getModel("state");
 					oStateModel.setProperty("/locked", false);
+					that.displaySuccess( { text: "Saved" } );
 			    } else {
 			        that.displayError(JSON.parse(xmlhttp.responseText));
 			    }
@@ -97,6 +119,7 @@ _loadSchemaData : function(sSchemaname) {
 	if (!!sSchemaname) {
 		oModel.loadData("../rest/rules/" + encodeURI(sServicename) + "/" + encodeURI(sMicroservicename) + "/" + encodeURI(sSchemaname));
 		oModel.refresh();
+		this.getView().byId("TreeTable").setBusy(true);
 	}
 },
 onChangeRuleType: function(oEvent) {
