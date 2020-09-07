@@ -3,10 +3,12 @@
         rows="{path:'/rules', parameters: {arrayNames:['rules']}}"
         selectionMode="Single"
         visibleRowCountMode="Auto"
+        enableBusyIndicator="true"
         enableSelectAll="false"
         ariaLabelledBy="title">
     <t:extension>
         <Toolbar>
+        	<Label text="Select a Schema"/>
 			<Select
 				items="{ path: 'schemarules>/schemas',
 						sorter: [
@@ -14,7 +16,7 @@
 							{path: 'schemaname'}
 						]
 					   }"
-				enabled="{= ${state>/roles/config} &amp;&amp; !${state>/locked} }"
+				enabled="{= !${state>/locked} }"
 				id="schemaselector"
 				forceSelection="false"
 				change="onSchemaChange">
