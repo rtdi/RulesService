@@ -23,7 +23,7 @@
 				<core:ListItem
 					key="{schemarules>schemaname}"
 					text="{schemarules>schemaname}"
-					icon="{path: 'schemarules>configured', formatter: '.schemaIconFormatter' } " />
+					icon="{path: 'schemarules>configured', formatter: '.schemaIconFormatter' }" />
 			</Select>
               <ToolbarSpacer/>
             <Button text="Delete Rule" press="onDelete" />
