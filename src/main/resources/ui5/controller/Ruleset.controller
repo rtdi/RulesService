@@ -139,13 +139,19 @@ onChangeRuleType: function(oEvent) {
 				var oLastEntity = oParentControl.rules[oParentControl.rules.length-1];
 				if (oLastEntity.type !== "EmptyRule") {
 					oTargetModel.setProperty(sParentPath + "/rules/" + oParentControl.rules.length,
-						{fieldname: oParentControl.fieldname, type: "EmptyRule"});
+						{fieldname: oParentControl.fieldname, type: "EmptyRule", iffalse: "FAIL", sampleresult: null});
 				}
 			}
 		}
 	}
-	if (sRuleType === 'EmptyRule' || sRuleType === 'PrimitiveRule') {
+	if (sRuleType === 'EmptyRule') {
 		oTargetModel.setProperty(oRulePath + "/rules", null);
+	} else if (sRuleType === 'PrimitiveRule') {
+		oTargetModel.setProperty(oRulePath + "/rules", null);
+		if (!!!oTargetRow.iffalse) {
+		    oTargetModel.setProperty(oRulePath + "/iffalse", "FAIL");
+		}
+		oTargetModel.setProperty(oRulePath + "/sampleresult", null);
 	} else {
 		var oChildRules = oTargetModel.getProperty(oRulePath + "/rules");
 		var oTableRow = oSourceControl.getParent();
@@ -153,8 +159,8 @@ onChangeRuleType: function(oEvent) {
 		var rowindex = oTreeTable.indexOfRow(oTableRow);
 		if (!oChildRules || oChildRules.length === 0) {
 			oTargetModel.setProperty(oRulePath + "/rules",
-					[ { fieldname: oTargetRow.fieldname, type: 'PrimitiveRule' },
-					 { fieldname: oTargetRow.fieldname, type: 'EmptyRule' } ] );
+					[ { fieldname: oTargetRow.fieldname, type: 'PrimitiveRule', iffalse: "FAIL", sampleresult: null },
+					 { fieldname: oTargetRow.fieldname, type: 'EmptyRule', iffalse: "FAIL", sampleresult: null } ] );
 		}
 		oTreeTable.expand(rowindex);
 	}
@@ -204,5 +210,19 @@ schemaIconFormatter : function(bConfigured) {
 	} else {
 		return null;
 	}
+},
+onFormulaPress: function (oEvent) { // works for both formula controls
+	var oButton = oEvent.getSource();
+	var oPopOver = oButton.getParent().getItems()[2];
+	if (oPopOver.isOpen()) {
+		oPopOver.close();
+	} else {
+		oPopOver.openBy(oButton);
+	}
+},
+onRuleFormulaClose: function (oEvent) {
+	var oPopOver = oEvent.getSource();
+	oPopOver.close();
 }
+
 

@@ -3,12 +3,14 @@
 _Validate incoming messages and augment them with rule testing results_
 
 Source code available here: [github](https://github.com/rtdi/RTDIRulesService)
+Docker image here: [dockerhub](https://hub.docker.com/r/rtdi/rulesservice)
 
 ## Design Thinking goal
+
 * As a business user I would like to validate the incoming data and cleanse it in realtime
 * Consumers have the choice to read the raw or the cleansed data
 * Operational dashboards using the rule results provide information about the data quality
-* Different types of rules should be supported, validation rules, cleansing rules, data augmentation, standardisation rules,...
+* Different types of rules should be supported, validation rules, cleansing rules, data augmentation, standardization rules,...
 
 
 ## Installation and testing
@@ -40,7 +42,7 @@ For proper start commands, especially https and security related, see the [Conne
 
 The first step is to connect the application to a Kafka server, in this example Confluent Cloud.
 
-<img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-PipelineConfig.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-PipelineConfig.png" width="50%">
 
 
 ### Define Services
@@ -49,26 +51,26 @@ Each Service is a Kakfa KStream, a distributed process listening on a topic and 
 
 Within one rule service for each schema multiple steps can be performed, a microservice transformation so to speak. These transformation steps happen within the service. For example the first microservice step might check missing data, the next standardize on the different spellings. The result of this step is then put into a third step, validating if the STATUS is valid and consistent with other data.
 
-<img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleDefinition-Level1.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleDefinition-Level1.png" width="50%">
 
 Once the structure is saved, by clicking on the individual steps the rules themselves are defined.
 
 Because a topic can contain data for multiple schemas, the rules are defined for each schema individually. If the message schema has no rules defined, it is passed through unchanged.
 
-<img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleDefinition-Level2.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleDefinition-Level2.png" width="50%">
 
 After a schema has been selected, its structure with all nested elements is shown and rules can be defined for each field.
 
 An example would be a rule on the OrderStatus column, which must contain the values C (..Completed) or N (..New). One way would be a a single rule on the column with a OR condition. The other option would be five rules testing for a single status value only and the test type is "Test until first Passes". 
 
-<img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleDefinition-Level3.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleDefinition-Level3.png" width="50%">
 
 ### Data content
 
 The result of all rule transformations is stored in the audit array of the record. Querying this data allows detailed reporting which records were processed by what rule and the results.
 If the input schema does not have such __audit array, a new version of the schema will be created automatically.
 
-<img src="https://github.com/rtdi/RTDIRulesService/raw/master/docs/media/RulesService-RuleResult.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleResult.png" width="50%">
 
 ### Rule types
 

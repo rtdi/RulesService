@@ -70,11 +70,14 @@
         <t:Column>
             <Label text="Condition"/>
             <t:template>
-                <Input value="{condition}" 
-                	visible="{= ${type} === 'PrimitiveRule' }" 
-                	valueState="{= (${conditionerror} ? 'Error' : 'None') }"
-                	valueStateText="{conditionerror}"
-                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            	<HBox visible="{= ${type} === 'PrimitiveRule' }" >
+	                <Input value="{condition}" 
+	                	valueState="{= (${conditionerror} ? 'Error' : 'None') }"
+	                	valueStateText="{conditionerror}"
+	                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+	                <Button icon="sap-icon://zoom-in" press="onFormulaPress" />
+	                <core:Fragment fragmentName="com.rtdi.bigdata.connector.ui.fragment.xml.RuleFormula" type="XML" />
+	            </HBox>
             </t:template>
         </t:Column>
         <t:Column>
@@ -92,12 +95,15 @@
         <t:Column>
             <Label text="Substitute with..."/>
             <t:template>
-                <Input value="{substitute}" 
-                	visible="{= ${type} === 'PrimitiveRule' }" 
-                	valueState="{= (${substituteerror} ? 'Error' : 'None') }"
-                	valueStateText="{substituteerror}"
-                	tooltip="{substituteresult}"
-                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+            	<HBox visible="{= ${type} === 'PrimitiveRule' }" >
+	                <Input value="{substitute}" 
+	                	valueState="{= (${substituteerror} ? 'Error' : 'None') }"
+	                	valueStateText="{substituteerror}"
+	                	tooltip="{substituteresult}"
+	                	enabled="{path: 'state>/roles/config', formatter: '.enableControl'}" />
+	                <Button icon="sap-icon://zoom-in" press="onFormulaPress" />
+	                <core:Fragment fragmentName="com.rtdi.bigdata.connector.ui.fragment.xml.SubstitutionFormula" type="XML" />
+	            </HBox>
             </t:template>
         </t:Column>
         <t:Column>
