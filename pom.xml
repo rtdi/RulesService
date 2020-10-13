@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.rtdi.bigdata.service</groupId>
 	<artifactId>rulesservice</artifactId>
-	<version>0.9.17</version>
+	<version>0.9.19</version>
 	<packaging>war</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
