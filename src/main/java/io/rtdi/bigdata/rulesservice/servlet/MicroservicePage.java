@@ -1,7 +1,7 @@
 package io.rtdi.bigdata.rulesservice.servlet;
 
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 
 import io.rtdi.bigdata.connector.connectorframework.servlet.UI5ServletAbstract;
 
