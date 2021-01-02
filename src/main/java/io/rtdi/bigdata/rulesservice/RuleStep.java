@@ -37,8 +37,10 @@ public class RuleStep extends MicroServiceTransformation {
 	public JexlRecord applyImpl(JexlRecord valuerecord) throws IOException {
 		SchemaRuleSet r = rs.get(valuerecord.getSchema().getFullName());
 		if (r != null && r.getRules() != null) {
+			addOperationLogLine("Applied rule for schema " + r.getSchemaname());
 			return r.apply(valuerecord);
 		} else {
+			addOperationLogLine("Record with schema " + valuerecord.getSchema().getFullName() + " has no rules defined - data passed through");
 			return valuerecord;
 		}
 	}
