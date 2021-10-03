@@ -12,7 +12,7 @@ import io.rtdi.bigdata.connector.connectorframework.controller.ConnectorControll
 import io.rtdi.bigdata.connector.connectorframework.controller.ServiceController;
 import io.rtdi.bigdata.connector.pipeline.foundation.PipelineAbstract;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
-import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
+import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.connectors.pipeline.kafkadirect.KafkaAPIdirect;
 import io.rtdi.bigdata.connectors.pipeline.kafkadirect.KafkaConnectionProperties;
 import io.rtdi.bigdata.rulesservice.rules.ArrayRule;

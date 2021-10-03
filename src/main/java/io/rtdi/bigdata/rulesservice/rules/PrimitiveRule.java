@@ -9,13 +9,14 @@ import org.apache.commons.jexl3.JexlException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
+import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroUtils;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.connector.pipeline.foundation.avrodatatypes.IAvroDatatype;
-import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
+import io.rtdi.bigdata.kafka.avro.datatypes.*;
+import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PipelineCallerException;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 import io.rtdi.bigdata.connector.pipeline.foundation.mapping.PrimitiveMapping;
-import io.rtdi.bigdata.connector.pipeline.foundation.recordbuilders.ValueSchema;
+import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class PrimitiveRule extends RuleWithName {
@@ -49,7 +50,7 @@ public class PrimitiveRule extends RuleWithName {
 		try {
 			RuleResult result = calculateResult(valuerecord);
 			if (result != null) {
-				JexlRecord r = ValueSchema.createAuditDetails();
+				JexlRecord r = AvroUtils.createAuditDetails();
 				r.put(ValueSchema.AUDITTRANSFORMATIONNAME, getRulePath());
 				r.put(ValueSchema.TRANSFORMRESULT, result.name());
 				String v;

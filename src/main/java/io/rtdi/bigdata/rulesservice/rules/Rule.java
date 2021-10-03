@@ -14,9 +14,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.connector.pipeline.foundation.avrodatatypes.AvroType;
-import io.rtdi.bigdata.connector.pipeline.foundation.avrodatatypes.IAvroDatatype;
-import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
+import io.rtdi.bigdata.kafka.avro.RuleResult;
+import io.rtdi.bigdata.kafka.avro.datatypes.*;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 
 @JsonTypeInfo(
