@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
+import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 
 @JsonIgnoreProperties(ignoreUnknown=true)

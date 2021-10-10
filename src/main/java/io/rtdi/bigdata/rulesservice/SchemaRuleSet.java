@@ -16,12 +16,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaRegistryName;
+import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroUtils;
 import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.connector.pipeline.foundation.enums.RowType;
-import io.rtdi.bigdata.connector.pipeline.foundation.enums.RuleResult;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
-import io.rtdi.bigdata.connector.pipeline.foundation.recordbuilders.ValueSchema;
 import io.rtdi.bigdata.connector.pipeline.foundation.utils.FileNameEncoder;
+import io.rtdi.bigdata.kafka.avro.RowType;
+import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.rulesservice.rules.RecordRule;
 import io.rtdi.bigdata.rulesservice.rules.Rule;
 
@@ -49,12 +49,12 @@ public class SchemaRuleSet extends RecordRule {
 	}
 
 	public JexlRecord apply(JexlRecord valuerecord) throws IOException {
-		RowType changetype = ValueSchema.getChangeType(valuerecord);
+		RowType changetype = AvroUtils.getChangeType(valuerecord);
 		// Rules are applied to new or changed records but not deleted rows
 		if (changetype == null || (changetype != RowType.EXTERMINATE && changetype != RowType.DELETE && changetype != RowType.TRUNCATE)) {
 			List<JexlRecord> ruleresults = new ArrayList<>();
 			apply(valuerecord, ruleresults);
-			ValueSchema.mergeResults(valuerecord, ruleresults);
+			AvroUtils.mergeResults(valuerecord, ruleresults);
 		}
 		return valuerecord;
 	}

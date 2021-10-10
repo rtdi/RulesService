@@ -10,18 +10,18 @@ import java.util.Set;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
+import org.apache.avro.SchemaBuilderException;
 
 import io.rtdi.bigdata.connector.connectorframework.Service;
 import io.rtdi.bigdata.connector.connectorframework.controller.ServiceController;
 import io.rtdi.bigdata.connector.pipeline.foundation.IPipelineAPI;
 import io.rtdi.bigdata.connector.pipeline.foundation.MicroServiceTransformation;
-import io.rtdi.bigdata.connector.pipeline.foundation.SchemaConstants;
 import io.rtdi.bigdata.connector.pipeline.foundation.SchemaHandler;
 import io.rtdi.bigdata.connector.pipeline.foundation.entity.ServiceEntity;
 import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.SchemaException;
-import io.rtdi.bigdata.connector.pipeline.foundation.recordbuilders.ValueSchema;
 import io.rtdi.bigdata.connector.pipeline.foundation.utils.IOUtils;
+import io.rtdi.bigdata.kafka.avro.SchemaConstants;
+import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
 
 public class RulesService extends Service {
 
@@ -66,7 +66,7 @@ public class RulesService extends Service {
 			}
 			n.build();
 			return n.getSchema();
-		} catch (SchemaException e) {
+		} catch (SchemaBuilderException e) {
 			throw new PropertiesException("The most recent schema version does not have a " + ValueSchema.AUDIT + " field - tried to derive a new schema and failed", e);
 		}
 	}
