@@ -28,10 +28,13 @@ For example [http://localhost:80/](http://localhost:80/) might do the trick of t
 
 The default login for this startup method is: **rtdi / rtdi!io**
 
-The probably better start command is to mount two host directories into the container. In this example the host's /data/files contains all files to be loaded into Kafka and the /data/config is an (initially) empty directory where all settings made when configuring the connector will be stored permanently.
+The probably better start command is to mount two host directories into the container, the rtdiconfig directory where all settings made when configuring the connector will be stored permanently and the security directory for web server specific settings like user database and SSL certificates.
 
-    docker run -d -p 80:8080 --rm -v /data/files:/data/ -v /data/config:/usr/local/tomcat/conf/security \
-       --name rulesservice  rtdi/rulesservice
+    docker run -d -p 80:8080 -p 443:8443 --rm -v /data/files:/data/ \
+       -v /home/dir/rtdiconfig:/usr/local/tomcat/conf/rtdiconfig \
+       -v /home/dir/security:/usr/local/tomcat/conf/security \
+        --name rulesservice  rtdi/rulesservice
+
 
 
 For proper start commands, especially https and security related, see the [ConnectorRootApp](https://github.com/rtdi/ConnectorRootApp) project, this application is based on.
@@ -47,7 +50,7 @@ The first step is to connect the application to a Kafka server, in this example 
 
 ### Define Services
 
-Each Service is a Kakfa KStream, a distributed process listening on a topic and validating the data. Hence the first setting of each service are the input and output topic names to use.
+Each Service is a Kafka KStream, a distributed process listening on a topic and validating the data. Hence the first setting of each service are the input and output topic names to use.
 
 Within one rule service for each schema multiple steps can be performed, a microservice transformation so to speak. These transformation steps happen within the service. For example the first microservice step might check missing data, the next standardize on the different spellings. The result of this step is then put into a third step, validating if the STATUS is valid and consistent with other data.
 
