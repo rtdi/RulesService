@@ -1,72 +1,43 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
-import java.util.List;
-
 import org.apache.avro.Schema;
-import org.apache.commons.jexl3.JexlException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PipelineCallerException;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
+import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
+import io.rtdi.bigdata.kafka.avro.datatypes.AvroType;
+import io.rtdi.bigdata.kafka.avro.datatypes.IAvroDatatype;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class EmptyRule extends Rule {
 
-	private Object value;
-
 	public EmptyRule() {
 		super();
 	}
-	
-	public EmptyRule(String fieldname) {
-		super(fieldname);
+
+	public EmptyRule(String fieldname, Schema schema) {
+		super(fieldname, schema != null ? schema.getFullName() : null);
+		if (schema != null) {
+			IAvroDatatype dt = AvroType.getAvroDataType(schema);
+			this.setDataType(dt);
+		}
 	}
 
 	@Override
-	public RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) {
+	public RuleResult apply(Object value, AvroJexlContext container, boolean test) {
+		setSampleValue(value, test);
 		return null;
 	}
 
 	@Override
-	protected Rule createUIRuleTree(Schema fieldschema) throws PropertiesException {
-		return this;
-	}
-
-	@Override
-	public
-	void assignSamplevalue(JexlRecord sampledata) {
-		this.value = sampledata.get(getFieldname());
-	}
-
-	@Override
-	public Object getSamplevalue() throws PipelineCallerException {
-		return PrimitiveRule.valueToJavaObject(value, getDataType());
-	}
-
-	@Override
-	public RuleResult getSampleresult() throws PipelineCallerException {
+	public RuleResult getSampleresult() {
 		return null;
 	}
 
 	@Override
-	public RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
-		return null;
-	}
-
-	@Override
-	protected Rule createSimplified() {
-		/*
-		 * An EmptyRule does never exist in the simplified version
-		 */
-		return null;
-	}
-
-	@Override
-	protected Rule createNewInstance() {
-		return null;
+	public String toString() {
+		return getFieldname() + ": EmptyRule";
 	}
 
 }

@@ -12,10 +12,16 @@ Docker image here: [dockerhub](https://hub.docker.com/r/rtdi/rulesservice)
 * Operational dashboards using the rule results provide information about the data quality
 * Different types of rules should be supported, validation rules, cleansing rules, data augmentation, standardization rules,...
 
+## Requirements
+
+* Payload (value) in Avro Format
+* Apache Kafka with the permissions to add a KStream
+* Schema Registry
+
 
 ## Installation and testing
 
-On any computer install the Docker Daemon - if it is not already - and download this docker image with
+On any computer install the Docker Daemon - if not already done - and download the docker image with
 
     docker pull rtdi/rulesservice
 
@@ -24,7 +30,7 @@ Then start the image via docker run. For a quick test this command is sufficient
     docker run -d -p 80:8080 --rm --name rulesservice  rtdi/rulesservice
 
 to expose a webserver at port 80 on the host running the container. Make sure to open the web page via the http prefix, as https needs more configuration.
-For example [http://localhost:80/](http://localhost:80/) might do the trick of the container is hosted on the same computer.
+For example [http://localhost:80/](http://localhost:80/) might do the trick if the container is hosted on the same computer.
 
 The default login for this startup method is: **rtdi / rtdi!io**
 
@@ -43,46 +49,45 @@ For proper start commands, especially https and security related, see the [Conne
 
 ### Connect the Pipeline to Kafka
 
-The first step is to connect the application to a Kafka server, in this example Confluent Cloud.
-
-<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-PipelineConfig.png" width="50%">
+The first step is to connect the application to a Kafka server and the schema registry.
 
 
 ### Define Services
 
-Each Service is a Kafka KStream, a distributed process listening on a topic and validating the data. Hence the first setting of each service are the input and output topic names to use.
+The rules are defined by subject. To help with the rule formulas, sample data can be gathered from the topics and used when defining the rules.
+Once a rule file is complete, it must be activated and associated with an input topic.
 
-Within one rule service for each schema multiple steps can be performed, a microservice transformation so to speak. These transformation steps happen within the service. For example the first microservice step might check missing data, the next standardize on the different spellings. The result of this step is then put into a third step, validating if the STATUS is valid and consistent with other data.
+### Result
 
-<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleDefinition-Level1.png" width="50%">
-
-Once the structure is saved, by clicking on the individual steps the rules themselves are defined.
-
-Because a topic can contain data for multiple schemas, the rules are defined for each schema individually. If the message schema has no rules defined, it is passed through unchanged.
-
-<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleDefinition-Level2.png" width="50%">
-
-After a schema has been selected, its structure with all nested elements is shown and rules can be defined for each field.
-
-An example would be a rule on the OrderStatus column, which must contain the values C (..Completed) or N (..New). One way would be a a single rule on the column with a OR condition. The other option would be five rules testing for a single status value only and the test type is "Test until first Passes". 
-
-<img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleDefinition-Level3.png" width="50%">
-
-### Data content
-
-The result of all rule transformations is stored in the audit array of the record. Querying this data allows detailed reporting which records were processed by what rule and the results.
-If the input schema does not have such __audit array, a new version of the schema will be created automatically.
+The input schema is copied as new schema, which has an additional `_audit` field, containing all audit results.
+There the overall rule result is stored (did it pass all tests?), a list of all rules executed and their individual results.
+Querying this data allows detailed reporting which records were processed by what rule and the results.
 
 <img src="https://github.com/rtdi/RulesService/raw/master/docs/media/RulesService-RuleResult.png" width="50%">
 
+## Architecture
+
+This service is runs one KStream application per topic, reading the input topic, applying the rules and sending the result to the defined output topic.
+While the key can be of any format, the value must be an Avro record.
+
+## Rules
+
 ### Rule types
 
-Rules can be applied on fields only and this field acts as the trigger and is used when providing a substitution value.
-For example, the SalesOrderHeader has a field SoldTo at root level, hence all rules will be executed once per message.
+Imagine the input has a field `NAME` which can be null but then we want to replace it with a `?`. Such a null value is not wrong as such but we do want to see it as a warning.
 
-A rule on a field of the SalesItems array will be triggered for each item. Thus the field a rule belongs to controls primarily that.
+Translated into the UI, we add a rule to the field and as rule condition to be met the formula `NAME != null`. If that condition returns true, the name has a value other than null, then the rule result is `=pass`. Else its rule result is whatever is set in the UI as `if test failed...`, in our case `=warn`.
+The `"?"` is entered in the `...change value to`, to assign that text to the field if the condition is not met.
 
-For each field either a single rule "Test a column" can be defined or a Test-Set with multiple rules.
+The UI also shows the node `(more)`, which is the place to enter all rules that do not belong to a single field. Such generic rules cannot have a replacement value for obvious reasons.
+
+No matter if a field rule or a generic rule is entered, the formulas have access to all fields of the message. For example, a rule for the input field `NAME` might either use the formula `NAME != null` or `NAME != null && COMPANY_NAME != null`. A field level rule is not limited to formulas using this field only!
+
+In case of a nested structure as input, rules can specified at all levels and are executed for each record in that level. 
+For example, the `CUSTOMER` schema might have an array of `ADDRESSES`. If a rule is added at the root level, it will be executed only once. If it is inside the `ADDRESSES` array, it will be executed once per address - for each address record in the array.
+
+With above capabilities all rules can be defined. The more conditions the more complex the formulas get, which is not good.
+For that reason there are more rule types, the Test-Set rule to specify multiple individual rules
 
 - Test for all conditions: Every single rule is applied, thus acting as a AND combination of rules. This is convenient for cases where a field needs to be checked for different conditions, e.g. the OrderDate has to be within three months or raise a warning and the OrderDate cannot be later than the expected delivery date. The rule set will return the lowest individual rule result. If all passed the result is pass. If at least one said warning, the result is a warning. And if one is failed, the result is failed.
 - Test until one failed: Each rule will be tested and stopped once the first rule violation is found. It is a AND combination of the rules as well but while in above case all rules are tested, here all other rules are not added to the test result. The rule set will return failed when at least one is failed and pass only if all rules passed.
@@ -91,7 +96,7 @@ For each field either a single rule "Test a column" can be defined or a Test-Set
 For each individual rule the rule result can be specified if the condition is met. This way the rule can specify the severity, e.g. a SoldTo == null shall be treated as failed, SoldTo.length() < 5 as well but SoldTo.length() < 10 shall be a warning only.
 Other tests might not impact the rule result at all, they return passed always. For those the audit array will show that the rule has been tested but the data is of no harm. For example in a gender column the test could be if the value is either M or F and in all other cases a substitution value of X is used. As the gender does return the values M,F or X only, it is to be considered valid.
 
-A more extreme case would be to assign a column with a fixed value. In that case the condition is the forumla "true", the rules result will be pass and the substitution formula the constant to assign.
+A more extreme case would be to assign a column with a fixed value. In that case the condition is the formula "true", the rules result will be pass and the substitution formula the constant to assign.
 
 ### Rule syntax
 

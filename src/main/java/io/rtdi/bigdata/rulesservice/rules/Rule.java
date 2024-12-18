@@ -3,52 +3,72 @@ package io.rtdi.bigdata.rulesservice.rules;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
+import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
+import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
+import io.rtdi.bigdata.kafka.avro.AvroUtils;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
-import io.rtdi.bigdata.kafka.avro.datatypes.*;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
+import io.rtdi.bigdata.kafka.avro.datatypes.AvroType;
+import io.rtdi.bigdata.kafka.avro.datatypes.IAvroDatatype;
 
 @JsonTypeInfo(
-		  use = JsonTypeInfo.Id.NAME, 
-		  include = JsonTypeInfo.As.PROPERTY, 
-		  property = "type")
-@JsonSubTypes({ 
-	@Type(value = EmptyRule.class, name = "EmptyRule"), 
-	@Type(value = ArrayRule.class, name = "ArrayRule"), 
-	@Type(value = PrimitiveRule.class, name = "PrimitiveRule"), 
-	@Type(value = TestSetAll.class, name = "TestSetAll"), 
-	@Type(value = TestSetFirstPass.class, name = "TestSetFirstPass"), 
-	@Type(value = TestSetFirstFail.class, name = "TestSetFirstFail"), 
-	@Type(value = RecordRule.class, name = "RecordRule") 
+		use = JsonTypeInfo.Id.NAME,
+		include = JsonTypeInfo.As.PROPERTY,
+		property = "type")
+@JsonSubTypes({
+	@Type(value = EmptyRule.class, name = "EmptyRule"),
+	@Type(value = ArrayRule.class, name = "ArrayRule"),
+	@Type(value = PrimitiveRule.class, name = "PrimitiveRule"),
+	@Type(value = TestSetAll.class, name = "TestSetAll"),
+	@Type(value = TestSetFirstPass.class, name = "TestSetFirstPass"),
+	@Type(value = TestSetFirstFail.class, name = "TestSetFirstFail"),
+	@Type(value = RecordRule.class, name = "RecordRule"),
+	@Type(value = UnionRule.class, name = "UnionRule"),
+	@Type(value = GenericRules.class, name = "GenericRules")
 })
 @JsonIgnoreProperties(ignoreUnknown=true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class Rule {
 	private String fieldname;
 	private List<Rule> rules = null;
 	private IAvroDatatype fielddatatype;
 	protected String rulepath;
-	private String sampleresulterror = null;
-	
+	private Object sampleinput = null;
+	private Object sampleoutput = null;
+	private RuleResult sampleresult;
+	private String schemaname;
+
 	public Rule() {
 		super();
 	}
 
-	public Rule(String fieldname) {
+	public Rule(String fieldname, String schemaname) {
 		this();
 		this.fieldname = fieldname;
+		this.schemaname = schemaname;
 	}
 
-	public abstract RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) throws IOException;
+	protected void setSampleValue(Object value, boolean test) {
+		if (test) {
+			setSampleinput(Rule.valueToJavaObject(value, getDataType()));
+			setSampleoutput(getSampleinput()); // Might be overwritten later
+		}
+	}
+
+	public abstract RuleResult apply(Object value, AvroJexlContext container, boolean test) throws IOException;
 
 	public List<Rule> getRules() {
 		return rules;
@@ -62,11 +82,11 @@ public abstract class Rule {
 			}
 		}
 	}
-	
+
 	public void setRules(List<Rule> rules) {
 		this.rules = rules;
 	}
-	
+
 	public void addAll(Collection<Rule> m) {
 		if (rules == null) {
 			rules = new ArrayList<>();
@@ -76,7 +96,7 @@ public abstract class Rule {
 			addRule(iter.next());
 		}
 	}
-	
+
 	protected String getRulePath() {
 		return rulepath;
 	}
@@ -97,8 +117,6 @@ public abstract class Rule {
 		this.fieldname = fieldname;
 	}
 
-	protected abstract Rule createUIRuleTree(Schema fieldschema) throws PropertiesException;
-
 	public String getFielddatatype() {
 		if (fielddatatype != null) {
 			return fielddatatype.toString();
@@ -114,7 +132,7 @@ public abstract class Rule {
 	protected void setDataType(IAvroDatatype fielddatatype) {
 		this.fielddatatype = fielddatatype;
 	}
-	
+
 	protected IAvroDatatype getDataType() {
 		return fielddatatype;
 	}
@@ -123,39 +141,80 @@ public abstract class Rule {
 		rulepath = parentpath;
 	}
 
-	public abstract void assignSamplevalue(JexlRecord record);
-
-	public abstract Object getSamplevalue() throws IOException;
-
-	public abstract RuleResult getSampleresult() throws IOException;
-
-	public abstract RuleResult validateRule(JexlRecord valuerecord);
-
-	public String getSampleresulterror() {
-		return sampleresulterror;
+	public void setSampleoutput(String sampleoutput) {
+		this.sampleoutput = sampleoutput;
 	}
 
-	protected Rule createSimplified() throws IOException {
-		Rule n = createNewInstance();
-		addAllMandatory(n);
-		if (n.getRules() == null || n.getRules().size() == 0) {
-			return null;
+	public Object getSampleoutput() {
+		return sampleoutput;
+	}
+
+	public void setSampleoutput(Object sampleoutput) {
+		if (sampleoutput instanceof GenericRecord) {
+			// ignore
+		} else if (sampleoutput instanceof List) {
+			// ignore
 		} else {
-			return n;
+			this.sampleoutput = sampleoutput;
+		}
+	}
+	public Object getSampleinput() {
+		return sampleinput;
+	}
+
+	public void setSampleinput(Object sampleinput) {
+		this.sampleinput = sampleinput;
+	}
+
+	public static Object valueToJavaObject(Object value, IAvroDatatype datatype) {
+		if (value != null && datatype != null) {
+			return datatype.convertToJava(value);
+		} else {
+			return null;
 		}
 	}
 
-	protected abstract Rule createNewInstance() throws IOException;
+	public RuleResult getSampleresult() {
+		return sampleresult;
+	}
 
-	protected void addAllMandatory(Rule target) throws IOException {
-		if (getRules() != null) {
-			for (Rule r : getRules()) {
-				Rule n = r.createSimplified();
-				if (n != null) {
-					target.addRule(n);
-				}
+	public void setSampleresult(RuleResult sampleresult) {
+		this.sampleresult = sampleresult;
+	}
+
+	/**
+	 * Add the substitution value to the changedvalues map
+	 *
+	 * @param valuerecord
+	 * @param fieldname
+	 * @param substitutevalue
+	 * @param changedvalues
+	 */
+	public static void addChangedvalue(JexlRecord valuerecord, String fieldname, Object substitutevalue, Map<JexlRecord, Map<String, Object>> changedvalues) {
+		Map<String, Object> fieldmap = changedvalues.get(valuerecord);
+		if (fieldmap == null) {
+			fieldmap = new HashMap<>();
+			changedvalues.put(valuerecord, fieldmap);
+		}
+		fieldmap.put(fieldname, substitutevalue);
+	}
+
+	public void updateSampleOutput(JexlRecord valuerecord) {
+		Object value = valuerecord.get(fieldname);
+		if (value instanceof List l) {
+			if (l.size() > 0) {
+				Schema c = AvroUtils.getBaseSchema(valuerecord.getSchema().getField(fieldname).schema());
+				setSampleoutput(valueToJavaObject(l.get(0), AvroType.getDataType(AvroType.getType(c.getElementType()), 10, 0)));
 			}
 		}
+		setSampleoutput(valueToJavaObject(value, getDataType()));
 	}
 
+	public String getSchemaname() {
+		return schemaname;
+	}
+
+	public void setSchemaname(String schemaname) {
+		this.schemaname = schemaname;
+	}
 }

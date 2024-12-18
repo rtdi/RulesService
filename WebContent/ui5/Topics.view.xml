@@ -1,0 +1,90 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.Topics"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:t="sap.ui.table" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.lib">
+	<controls:RulesToolPage sideExpanded="false">
+		<controls:header>
+			<tnt:ToolHeader>
+				<Text text="Topic rules" />
+				<ToolbarSpacer/>
+                <Button text="Save" press="onSave" tooltip="Store the settings for each input topic as file"/>
+			</tnt:ToolHeader>
+		</controls:header>
+		<controls:mainContents>
+			<FlexBox direction="Column" fitContainer="true">
+				<Panel height="100%">
+					<layoutData>
+						<FlexItemData growFactor="1" />
+					</layoutData>
+			        <t:Table
+			                rows="{/}"
+					        selectionMode="None"
+					        enableBusyIndicator="true"
+					        enableSelectAll="false"
+			                ariaLabelledBy="title">
+			            <t:extension>
+			                <OverflowToolbar style="Clear">
+			                </OverflowToolbar>
+			            </t:extension>
+			            <t:rowMode>
+			            	<t:rowmodes.Auto/>
+			            </t:rowMode>
+					    <t:columns>
+					        <t:Column>
+					            <Label text="Input topic"/>
+					            <t:template>
+					                <Text text="{inputtopicname}" wrapping="false" renderWhitespace="false" />
+					            </t:template>
+					        </t:Column>
+					        <t:Column>
+					            <Label text="Output topic"/>
+					            <t:template>
+									<Select
+											forceSelection="false"
+											selectedKey="{outputtopicname}"
+											valueState="{= ${inputtopicname} === ${outputtopicname} ? 'Error' : 'None' }"
+											valueStateText="{= ${inputtopicname} === ${outputtopicname} ? 'Output topic must be different to input topic' : '' }"
+											items="{
+												path: '/',
+												templateShareable: false,
+												sorter: { path: 'inputtopicname' }
+											}">
+										<core:Item key="{inputtopicname}" text="{inputtopicname}" />
+									</Select>
+					            </t:template>
+					        </t:Column>
+					        <t:Column>
+					            <Label text="Rules"/>
+					            <t:template>
+									<MultiComboBox
+										maxWidth="40rem"
+										selectionFinish=".onChange"
+										selectedKeys="{rulefiles}"
+										items="{
+											path: 'rulegroups>/',
+											sorter: { path: 'name' },
+											templateShareable: false
+										}">
+										<core:Item key="{rulegroups>subjectname}/{rulegroups>name}" text="{rulegroups>name} ({rulegroups>subjectname}, {= ${rulegroups>active}?'active':'inactive' })" />
+									</MultiComboBox>
+					            </t:template>
+					        </t:Column>
+					        <t:Column>
+					            <Label text="Active all"/>
+					            <t:template>
+					                <CheckBox selected="{activate}" />
+					            </t:template>
+					        </t:Column>
+					        <t:Column>
+					            <Label text="info"/>
+					            <t:template>
+					                <Text text="{info}" />
+					            </t:template>
+					        </t:Column>
+					    </t:columns>
+			        </t:Table>
+			    </Panel>
+	        </FlexBox>
+	    </controls:mainContents>
+	 </controls:RulesToolPage>
+</mvc:View>
+

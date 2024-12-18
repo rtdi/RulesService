@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Rule definition</title>
+
+	<script id="sap-ui-bootstrap"
+		src="/openui5/resources/sap-ui-core.js"
+		data-sap-ui-theme="sap_fiori_3"
+		data-sap-ui-libs="sap.m"
+		data-sap-ui-xx-bindingSyntax="complex"
+		data-sap-ui-xx-supportedLanguages="en"
+		data-sap-ui-resourceroots='{
+			"io.rtdi.bigdata.rulesservice": "./"
+		}'
+		data-sap-ui-async="true"
+		data-sap-ui-compatVersion="edge"
+		data-sap-ui-frameOptions="trusted" >
+	</script>
+	<script>
+		sap.ui.getCore().attachInit(function () {
+			document.body.innerHTML=''
+			new sap.ui.xmlview({
+				viewName: "io.rtdi.bigdata.rulesservice.Rule"
+				}).placeAt("content");
+			});
+	</script>
+</head>
+
+<body class="sapUiBody" id="content" style="height: 100%;">
+	<p>Loading OpenUI5 from <a href="/openui5/resources/sap-ui-core.js">here</a></p>
+</body>
+</html>
+

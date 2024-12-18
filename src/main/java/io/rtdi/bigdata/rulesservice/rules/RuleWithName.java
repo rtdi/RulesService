@@ -1,5 +1,7 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
+import org.apache.avro.Schema;
+
 public abstract class RuleWithName extends Rule {
 	private String rulename;
 
@@ -7,8 +9,8 @@ public abstract class RuleWithName extends Rule {
 		super();
 	}
 
-	public RuleWithName(String fieldname, String rulename) {
-		super(fieldname);
+	public RuleWithName(String fieldname, String rulename, Schema schema) {
+		super(fieldname, schema != null ? schema.getFullName() : null);
 		this.rulename = rulename;
 	}
 

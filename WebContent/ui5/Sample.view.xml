@@ -1,0 +1,74 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.Sample"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:t="sap.ui.table" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.lib">
+	<controls:RulesToolPage sideExpanded="false">
+		<controls:header>
+			<tnt:ToolHeader>
+				<Text text="Topics to Sample" />
+				<ToolbarSpacer/>
+				<MultiComboBox
+					id="topicselector"
+					width="30rem"
+					items="{
+						path: '/',
+						sorter: { path: 'name' }
+					}">
+					<core:Item key="{name}" text="{name}"/>
+				</MultiComboBox>
+                <Button text="Execute" press=".onExecute"/>
+			</tnt:ToolHeader>
+		</controls:header>
+		<controls:mainContents>
+			<ScrollContainer height='100%' vertical="true">
+					<Table id="tabledata"
+						mode="MultiSelect"
+						items="{path:'/', templateShareable:false}">
+						<headerToolbar>
+							<OverflowToolbar style="Clear">
+								<ToolbarSpacer/>
+								<Button text="Save Selected" press=".onSaveSelected"/>
+							</OverflowToolbar>
+						</headerToolbar>
+						<columns>
+							<Column width="5%">
+								<Label text="Partition/Offset" />
+							</Column>
+							<Column width="20%">
+								<Label text="Subject" />
+							</Column>
+							<Column>
+								<Label text="Payload" />
+							</Column>
+							<Column width="20%">
+								<Label text="Filename" />
+							</Column>
+							<Column width="7%">
+								<Label text="Save" />
+							</Column>
+						</columns>
+						<items>
+							<ColumnListItem vAlign="Middle" selected="{selected}">
+								<cells>
+									<Text text="{partition}/{offset}" wrapping="false" renderWhitespace="false" />
+									<Select
+										forceSelection="true"
+										selectedKey="{subjectname}"
+										items="{
+													path: 'subjects',
+													sorter: { path: 'Name' },
+													templateShareable: false
+												}" >
+										<core:Item key="{name}" text="{name}" />
+									</Select>
+									<controls:JSONViewer text="{payload}" collapsed="true" />
+									<Input value="{filename}" valueStateText="{error/errormessage}" valueState="{= (${error/errormessage} ? 'Error' : 'None')}" />
+									<Button text="Save" press=".onSavePayload"/>
+								</cells>
+							</ColumnListItem>
+						</items>
+					</Table>
+			</ScrollContainer>
+	    </controls:mainContents>
+	 </controls:RulesToolPage>
+</mvc:View>
+
