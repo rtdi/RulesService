@@ -222,8 +222,11 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.Rule", {
 			var text = event.getParameter("responseText");
 			sap.m.MessageToast.show("Calculate failed: " + text);
 		});
-		stepmodel.attachRequestCompleted(function() {
-			model.setProperty("/rulesteps/" + stepindex + "/", stepmodel.getProperty("/"));
+		stepmodel.attachRequestCompleted(function(event) {
+			var successful = event.getParameter("success");
+			if (successful) {
+				model.setProperty("/rulesteps/" + stepindex + "/", stepmodel.getProperty("/"));
+			}
 		});
 		stepmodel.loadData("../rest/calculate/" + stepindex, json, true, "POST", false, true, headers);
 	},

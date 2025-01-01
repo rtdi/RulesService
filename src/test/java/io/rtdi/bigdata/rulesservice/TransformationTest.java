@@ -8,13 +8,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.kafka.avro.datatypes.AvroNVarchar;
 import io.rtdi.bigdata.kafka.avro.recordbuilders.SchemaBuilder;
 import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
-import io.rtdi.bigdata.rulesservice.definition.RuleFileDefinition;
-import io.rtdi.bigdata.rulesservice.definition.RuleStep;
+import io.rtdi.bigdata.rulesservice.config.RuleFileDefinition;
+import io.rtdi.bigdata.rulesservice.config.RuleStep;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 import io.rtdi.bigdata.rulesservice.rules.PrimitiveRule;
 
 class TransformationTest {
@@ -44,8 +44,8 @@ class TransformationTest {
 			step1.addRule(rule2);
 
 			JexlRecord record1 = new JexlRecord(schemabuilder.getSchema(), null);
-			record1.set("POSTALCODE", "81959");
-			record1.set("COUNTRY", "GERMANY");
+			record1.put("POSTALCODE", "81959");
+			record1.put("COUNTRY", "GERMANY");
 			rg.setSchema(schemabuilder.getSchema().toString());
 			rg.apply(record1, false);
 			System.out.println(record1);
@@ -54,7 +54,7 @@ class TransformationTest {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail("Not yet implemented");
+			fail("Exception thrown");
 		}
 	}
 

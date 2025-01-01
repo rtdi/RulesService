@@ -16,7 +16,10 @@
 						<FlexItemData growFactor="1" />
 					</layoutData>
 			        <t:Table
-			                rows="{/}"
+			                rows="{
+			                	path: '/',
+								sorter: { path: 'inputtopicname' }
+							}"
 					        selectionMode="None"
 					        enableBusyIndicator="true"
 					        enableSelectAll="false"
@@ -69,9 +72,21 @@
 					            </t:template>
 					        </t:Column>
 					        <t:Column>
+					            <Label text="Instances"/>
+					            <t:template>
+									<StepInput
+										value="{instances}"
+										min="1"
+										max="30"
+										width="5rem"
+										enabled="{= !!${outputtopicname} }"
+									/>
+					            </t:template>
+					        </t:Column>
+					        <t:Column>
 					            <Label text="Active all"/>
 					            <t:template>
-					                <CheckBox selected="{activate}" />
+					                <CheckBox selected="{activate}" enabled="{= !!${outputtopicname} }" />
 					            </t:template>
 					        </t:Column>
 					        <t:Column>

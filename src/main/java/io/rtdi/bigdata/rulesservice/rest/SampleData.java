@@ -12,7 +12,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Parser;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.avro.io.DecoderFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,13 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroRuleUtils;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlAvroDeserializer;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericDatumReader;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.AvroDeserializer;
 import io.rtdi.bigdata.rulesservice.config.SampleFileName;
 import io.rtdi.bigdata.rulesservice.config.SubjectName;
+import io.rtdi.bigdata.rulesservice.jexl.AvroRuleUtils;
+import io.rtdi.bigdata.rulesservice.jexl.JexlAvroDeserializer;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SampleData {

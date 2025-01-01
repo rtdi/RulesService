@@ -17,12 +17,12 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.AvroUtils;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.kafka.avro.datatypes.AvroType;
 import io.rtdi.bigdata.kafka.avro.datatypes.IAvroDatatype;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 
 @JsonTypeInfo(
 		use = JsonTypeInfo.Id.NAME,
@@ -68,7 +68,7 @@ public abstract class Rule {
 		}
 	}
 
-	public abstract RuleResult apply(Object value, AvroJexlContext container, boolean test) throws IOException;
+	public abstract RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException;
 
 	public List<Rule> getRules() {
 		return rules;
@@ -217,4 +217,7 @@ public abstract class Rule {
 	public void setSchemaname(String schemaname) {
 		this.schemaname = schemaname;
 	}
+
+	@Override
+	public abstract Rule clone();
 }

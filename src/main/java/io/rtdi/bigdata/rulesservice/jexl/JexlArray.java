@@ -1,4 +1,4 @@
-package io.rtdi.bigdata.connector.pipeline.foundation.avro;
+package io.rtdi.bigdata.rulesservice.jexl;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,32 +12,39 @@ import java.util.Map.Entry;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericData.Array;
+import org.apache.commons.jexl3.annotations.NoJexl;
 
-public class JexlArray<T> extends Array<T> implements AvroJexlContext {
+public class JexlArray<T> extends Array<T> implements AvroContainer {
 
-	private AvroJexlContext parent = null;
+	private AvroContainer parent = null;
 	Field parentfield;
 	private int parentarrayindex = -1;
 	private String path;
 	private Map<String, Object> changedvalues = null;
 	private List<JexlRecord> ruleresults = null;
-	private AvroJexlContext root = null;
+	private AvroContainer root = null;
+	private Map<String, Object> map = null;
 
+
+	@NoJexl
 	public JexlArray(Schema schema, Collection<T> c) {
 		super(schema, c);
 	}
 
+	@NoJexl
 	public JexlArray(int capacity, Schema schema, JexlRecord parent) {
 		super(capacity, schema);
 		setParent(parent);
 	}
 
 	@Override
-	public void setParent(AvroJexlContext parent) {
+	@NoJexl
+	public void setParent(AvroContainer parent) {
 		this.parent = parent;
 	}
 
 	@Override
+	@NoJexl
 	public void mergeReplacementValues() {
 		if (changedvalues != null) {
 			for( Entry<String, Object> entry : changedvalues.entrySet()) {
@@ -50,7 +57,7 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 			Iterator<T> iter = this.iterator();
 			while (iter.hasNext()) {
 				T c = iter.next();
-				if (c instanceof AvroJexlContext r) {
+				if (c instanceof AvroContainer r) {
 					r.mergeReplacementValues();
 				}
 			}
@@ -75,11 +82,12 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 	}
 
 	@Override
-	public AvroJexlContext getParent() {
+	public AvroContainer getParent() {
 		return parent;
 	}
 
 	@Override
+	@NoJexl
 	public boolean add(T o) {
 		if (o instanceof JexlRecord r) {
 			r.setParent(this);
@@ -89,6 +97,7 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 	}
 
 	@Override
+	@NoJexl
 	public void add(int location, T o) {
 		if (o instanceof JexlRecord r) {
 			r.setParent(this);
@@ -98,6 +107,7 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 	}
 
 	@Override
+	@NoJexl
 	public T set(int i, T o) {
 		if (o instanceof JexlRecord r) {
 			r.setParent(this);
@@ -132,55 +142,30 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 
 	@Override
 	public Object get(String name) {
-		try {
-			int index = Integer.parseInt(name);
-			if (index > 0 && index < this.size()) {
-				return this.get(index);
-			} else {
-				return null;
-			}
-		} catch (NumberFormatException e) {
-			return null;
-		}
-	}
-
-	@Override
-	public boolean has(String name) {
-		try {
-			int index = Integer.parseInt(name);
-			if (index > 0 && index < this.size()) {
-				return true;
-			} else {
-				return false;
-			}
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	@Override
-	public void set(String name, Object value) {
-		try {
-			@SuppressWarnings("unchecked")
-			T v = (T) value;
-			if (name.equals("NEW")) {
-				this.add(v);
-			} else {
+		if ("parent".equals(name)) {
+			return parent;
+		} else {
+			try {
 				int index = Integer.parseInt(name);
 				if (index > 0 && index < this.size()) {
-					this.set(index, v);
-				} else {
-					// do nothing
+					return this.get(index);
 				}
+			} catch (NumberFormatException e) {
 			}
-		} catch (NumberFormatException | ClassCastException e) {
-			// ignore
 		}
+		return null;
 	}
 
 	@Override
+	@NoJexl
+	public void set(String name, Object value) {
+		throw new IllegalAccessError("A array is a read-only object");
+	}
+
+	@Override
+	@NoJexl
 	public void addRuleresult(JexlRecord r) throws IOException {
-		AvroJexlContext root = getRoot();
+		AvroContainer root = getRoot();
 		if (root.getRuleresults() == null) {
 			root.setRuleresults(new ArrayList<>());
 		}
@@ -188,8 +173,9 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 	}
 
 	@Override
+	@NoJexl
 	public void setRuleresults(ArrayList<JexlRecord> list) throws IOException {
-		AvroJexlContext root = getRoot();
+		AvroContainer root = getRoot();
 		if (root == this) {
 			ruleresults = list;
 		} else {
@@ -197,15 +183,67 @@ public class JexlArray<T> extends Array<T> implements AvroJexlContext {
 		}
 	}
 
-	public AvroJexlContext getRoot() {
+	public AvroContainer getRoot() {
 		if (root != null) {
 			return root;
 		} else {
-			AvroJexlContext root = this;
+			AvroContainer root = this;
 			while (root.getParent() != null) {
 				root = root.getParent();
 			}
 			return root;
+		}
+	}
+
+	public JexlRecord find(String field, Object value) {
+		if (field != null && value != null) {
+			for (Object o : this) {
+				if (o instanceof JexlRecord r) {
+					Object v = r.get(field);
+					if (value.equals(v)) {
+						return r;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Map<String, Object> toMap() {
+		if (map == null) {
+			map = new HashMap<>();
+			for (int i = 0; i < size(); i++) {
+				Object value = super.get(i);
+				if (value instanceof AvroContainer c) {
+					map.put(String.valueOf(i), c.toMap());
+				} else {
+					map.put(String.valueOf(i), value);
+				}
+			}
+			AvroContainer p = this.getParent();
+			if (p != null) {
+				map.put("parent", p.toMap());
+			}
+		}
+		return map;
+	}
+
+	@Override
+	public boolean has(String name) {
+		if ("parent".equals(name)) {
+			return true;
+		} else {
+			try {
+				int index = Integer.parseInt(name);
+				if (index > 0 && index < this.size()) {
+					return true;
+				} else {
+					return false;
+				}
+			} catch (NumberFormatException e) {
+				return false;
+			}
 		}
 	}
 

@@ -7,12 +7,12 @@ import org.apache.commons.jexl3.JexlException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroRuleUtils;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
 import io.rtdi.bigdata.rulesservice.PropertiesException;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
+import io.rtdi.bigdata.rulesservice.jexl.AvroRuleUtils;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class PrimitiveRule extends RuleWithName {
@@ -28,7 +28,7 @@ public class PrimitiveRule extends RuleWithName {
 			throw new PropertiesException("Condition formula cannot be null", null, null, fieldname);
 		}
 		this.condition = new PrimitiveMapping(condition);
-		this.iffalse = (iffalse == null?RuleResult.FAIL:iffalse);
+		this.iffalse = (iffalse == null ? RuleResult.FAIL : iffalse);
 		if (substitute != null && substitute.length() > 0) {
 			this.substitute = new PrimitiveMapping(substitute);
 		}
@@ -39,7 +39,7 @@ public class PrimitiveRule extends RuleWithName {
 	}
 
 	@Override
-	public RuleResult apply(Object value, AvroJexlContext container, boolean test) throws IOException {
+	public RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException {
 		try {
 			setSampleValue(value, test);
 			RuleResult result = calculateResult(container, test);
@@ -89,7 +89,7 @@ public class PrimitiveRule extends RuleWithName {
 		}
 	}
 
-	private RuleResult calculateResult(AvroJexlContext valuerecord, boolean test) throws IOException {
+	private RuleResult calculateResult(AvroContainer valuerecord, boolean test) throws IOException {
 		if (condition != null) {
 			RuleResult r = null;
 			Object o = condition.evaluate(valuerecord);
@@ -211,6 +211,19 @@ public class PrimitiveRule extends RuleWithName {
 
 	public String getConditionerror() {
 		return conditionerror;
+	}
+
+	@Override
+	public Rule clone() {
+		PrimitiveRule ret = new PrimitiveRule();
+		ret.setCondition(getCondition());
+		ret.setDataType(getDataType());
+		ret.setFieldname(getFieldname());
+		ret.setIffalse(getIffalse());
+		ret.setRulename(getRulename());
+		ret.setSchemaname(getSchemaname());
+		ret.setSubstitute(getSubstitute());
+		return ret;
 	}
 
 }

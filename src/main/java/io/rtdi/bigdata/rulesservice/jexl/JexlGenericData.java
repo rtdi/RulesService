@@ -1,4 +1,4 @@
-package io.rtdi.bigdata.connector.pipeline.foundation.avro;
+package io.rtdi.bigdata.rulesservice.jexl;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;

@@ -28,14 +28,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.rtdi.bigdata.rulesservice.LoggingUtil;
 import io.rtdi.bigdata.rulesservice.RulesService;
+import io.rtdi.bigdata.rulesservice.config.RuleFileDefinition;
 import io.rtdi.bigdata.rulesservice.config.RuleFileName;
+import io.rtdi.bigdata.rulesservice.config.RuleStep;
 import io.rtdi.bigdata.rulesservice.config.SampleFileName;
 import io.rtdi.bigdata.rulesservice.config.ServiceSettings;
 import io.rtdi.bigdata.rulesservice.config.SubjectName;
 import io.rtdi.bigdata.rulesservice.config.TopicName;
 import io.rtdi.bigdata.rulesservice.config.TopicRule;
-import io.rtdi.bigdata.rulesservice.definition.RuleFileDefinition;
-import io.rtdi.bigdata.rulesservice.definition.RuleStep;
 import io.rtdi.bigdata.rulesservice.rules.RuleUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,7 +61,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/")
-public class ServiceConfig {
+public class RestService {
 	protected static final int SAMPLE_MAX_ROWS = 100;
 
 	protected final Logger log = LogManager.getLogger(this.getClass().getName());
@@ -88,7 +88,7 @@ public class ServiceConfig {
 							description = "Configuration data",
 							content = {
 									@Content(
-											schema = @Schema(implementation = ServiceConfig.class)
+											schema = @Schema(implementation = RestService.class)
 											)
 							}
 							),
@@ -471,13 +471,65 @@ public class ServiceConfig {
 		try {
 			LoggingUtil.logRequestBegin(log, request);
 			RulesService service = RulesService.getRulesService(servletContext);
-			org.apache.avro.Schema schema = service.getLatestSchema(subjectname);
-			RuleFileDefinition rg = new RuleFileDefinition(schema);
-			rg.setInputsubjectname(subjectname);
-			RuleStep step = new RuleStep("next step", schema);
-			rg.addRuleStep(step);
-			RuleUtils.addRules(step, schema);
+			RuleFileDefinition rg = createEmptyRuleFileDefinition(subjectname, service);
 			return LoggingUtil.requestEnd(log, request, rg);
+		} catch (Exception e) {
+			return LoggingUtil.requestEndTechnicalError(log, request, e);
+		}
+	}
+
+	private RuleFileDefinition createEmptyRuleFileDefinition(String subjectname, RulesService service) throws IOException, RestClientException {
+		org.apache.avro.Schema schema = service.getLatestSchema(subjectname);
+		RuleFileDefinition rg = new RuleFileDefinition(schema);
+		rg.setInputsubjectname(subjectname);
+		RuleStep step = new RuleStep("next step", schema);
+		rg.addRuleStep(step);
+		RuleUtils.addRules(step, schema);
+		return rg;
+	}
+
+	@POST
+	@Path("/subjects/{subject}/update")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@RolesAllowed(ServletSecurityConstants.ROLE_EDIT)
+	@Operation(
+			summary = "Update a rule file to the latest schema",
+			description = "Takes the current rule file and updates it to the latest schema version",
+			responses = {
+					@ApiResponse(
+							responseCode = "200",
+							description = "New rule file",
+							content = {
+									@Content(
+											schema = @Schema(implementation = RuleFileDefinition.class)
+											)
+							}
+							),
+					@ApiResponse(
+							responseCode = "500",
+							description = "Any exception thrown",
+							content = {
+									@Content(
+											schema = @Schema(implementation = ErrorResponse.class)
+											)
+							}
+							)
+			})
+	public Response updateRuleFile(
+			@PathParam("subject")
+			@Parameter(
+					description = "name of subject",
+					example = "order_data-value"
+					)
+			String subjectname,
+			@RequestBody RuleFileDefinition input) {
+		try {
+			LoggingUtil.logRequestBegin(log, request);
+			RulesService service = RulesService.getRulesService(servletContext);
+			RuleFileDefinition empty = createEmptyRuleFileDefinition(subjectname, service);
+			input.update(empty);
+			return LoggingUtil.requestEnd(log, request, input);
 		} catch (Exception e) {
 			return LoggingUtil.requestEndTechnicalError(log, request, e);
 		}

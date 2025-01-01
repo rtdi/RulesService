@@ -1,18 +1,20 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.kafka.avro.datatypes.AvroUnion;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 
-public class UnionRule extends Rule {
+public class UnionRule extends Rule implements IContainerRule {
 
 	public UnionRule() {
 		super();
@@ -32,7 +34,7 @@ public class UnionRule extends Rule {
 	}
 
 	@Override
-	public RuleResult apply(Object value, AvroJexlContext container, boolean test) throws IOException {
+	public RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException {
 		// List<Schema> unionschema = container.getSchema().getField(getFieldname()).schema().getTypes();
 		// TODO: Currently it works on the base schema only, but a union could also encompass multiple types as long as they have different names
 
@@ -65,6 +67,9 @@ public class UnionRule extends Rule {
 					}
 					break;
 				case FIXED:
+					if (value instanceof CharSequence) {
+						r.apply(value, container, test);
+					}
 					break;
 				case FLOAT:
 					if (value instanceof Float) {
@@ -113,6 +118,39 @@ public class UnionRule extends Rule {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void update(IContainerRule empty) {
+		if (empty instanceof UnionRule) {
+			if (getRules() != null && empty.getRules() != null) {
+				for ( int i=0; i<getRules().size(); i++ ) {
+					Rule rule = getRules().get(i);
+					if (empty.getRules().size() > i) {
+						Rule emptyrule = getRules().get(i);
+						if (rule instanceof IContainerRule rr && emptyrule instanceof IContainerRule er) {
+							rr.update(er);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public Rule clone() {
+		UnionRule ret = new UnionRule();
+		ret.setDataType(getDataType());
+		ret.setFieldname(getFieldname());
+		ret.setSchemaname(getSchemaname());
+		if (getRules() != null) {
+			List<Rule> a = new ArrayList<>(getRules().size());
+			ret.setRules(a);
+			for (Rule r : getRules()) {
+				a.add(r.clone());
+			}
+		}
+		return ret;
 	}
 
 }

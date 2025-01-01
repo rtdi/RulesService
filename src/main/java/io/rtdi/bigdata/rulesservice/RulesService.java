@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
-import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Parser;
@@ -54,20 +53,18 @@ import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.rtdi.appcontainer.utils.UsageStatisticSender;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlArray;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
-import io.rtdi.bigdata.kafka.avro.AvroDataTypeException;
 import io.rtdi.bigdata.kafka.avro.AvroUtils;
 import io.rtdi.bigdata.kafka.avro.datatypes.AvroType;
 import io.rtdi.bigdata.kafka.avro.datatypes.IAvroDatatype;
 import io.rtdi.bigdata.kafka.avro.recordbuilders.SchemaBuilder;
 import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
+import io.rtdi.bigdata.rulesservice.config.RuleFileDefinition;
 import io.rtdi.bigdata.rulesservice.config.RuleFileName;
+import io.rtdi.bigdata.rulesservice.config.RuleStep;
 import io.rtdi.bigdata.rulesservice.config.ServiceSettings;
 import io.rtdi.bigdata.rulesservice.config.TopicRule;
-import io.rtdi.bigdata.rulesservice.definition.RuleFileDefinition;
-import io.rtdi.bigdata.rulesservice.definition.RuleStep;
+import io.rtdi.bigdata.rulesservice.jexl.JexlArray;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 import io.rtdi.bigdata.rulesservice.rest.SampleData;
 import io.rtdi.bigdata.rulesservice.rules.ArrayRule;
 import io.rtdi.bigdata.rulesservice.rules.RecordRule;
@@ -166,8 +163,8 @@ public class RulesService implements ServletContextListener {
 	 */
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-		if (System.getenv("APPCONTAINERSTATISTICS") == null
-				|| !System.getenv("APPCONTAINERSTATISTICS").equalsIgnoreCase("FALSE")) {
+		if (System.getenv("STATISTICS") == null
+				|| !System.getenv("STATISTICS").equalsIgnoreCase("FALSE")) {
 			this.executor = Executors.newSingleThreadScheduledExecutor();
 			executor.scheduleAtFixedRate(new UsageStatisticSender(this), 1, 10, TimeUnit.MINUTES);
 			this.context = sce.getServletContext();

@@ -35,6 +35,7 @@ class GenerateDataTest {
 	private static Map<String, Object> propertiesmap;
 	private static CachedSchemaRegistryClient schemaclient;
 	private static Admin admin;
+
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
 		Path settingsdir = Path.of("/apps/rulesservice/settings");

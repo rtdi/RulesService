@@ -1,4 +1,4 @@
-package io.rtdi.bigdata.rulesservice.definition;
+package io.rtdi.bigdata.rulesservice.config;
 
 import java.io.IOException;
 
@@ -7,9 +7,9 @@ import org.apache.avro.Schema;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 import io.rtdi.bigdata.rulesservice.rules.GenericRules;
 import io.rtdi.bigdata.rulesservice.rules.RecordRule;
 import io.rtdi.bigdata.rulesservice.rules.Rule;
@@ -30,7 +30,7 @@ public class RuleStep extends RecordRule {
 	}
 
 	@Override
-	public RuleResult apply(Object value, AvroJexlContext container, boolean test) throws IOException {
+	public RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException {
 		if (getRules() != null) {
 			for ( Rule rule : getRules()) {
 				if (rule.getFieldname() != null && !(rule instanceof GenericRules)) {

@@ -11,8 +11,6 @@ import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.rtdi.bigdata.rulesservice.definition.RuleFileDefinition;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TopicRule implements Comparable<TopicRule> {
@@ -21,6 +19,7 @@ public class TopicRule implements Comparable<TopicRule> {
 	private Boolean modified;
 	private Boolean activate;
 	private String info;
+	private Integer instances;
 	/**
 	 * A List of rulefiles to be used for this topic in the format of <subject>/<filename>
 	 */
@@ -122,6 +121,14 @@ public class TopicRule implements Comparable<TopicRule> {
 
 	public void setActivate(Boolean activate) {
 		this.activate = activate;
+	}
+
+	public Integer getInstances() {
+		return instances;
+	}
+
+	public void setInstances(Integer instances) {
+		this.instances = instances;
 	}
 
 }

@@ -1,4 +1,4 @@
-package io.rtdi.bigdata.rulesservice.definition;
+package io.rtdi.bigdata.rulesservice.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +15,9 @@ import org.apache.avro.Schema;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroRuleUtils;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlRecord;
 import io.rtdi.bigdata.kafka.avro.RowType;
-import io.rtdi.bigdata.rulesservice.config.RuleFileName;
+import io.rtdi.bigdata.rulesservice.jexl.AvroRuleUtils;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 
 public class RuleFileDefinition {
 	private Path name;
@@ -282,6 +281,19 @@ public class RuleFileDefinition {
 	@Override
 	public String toString() {
 		return getName() + ": RuleFile";
+	}
+
+	public void update(RuleFileDefinition empty) {
+		if (schema.compareTo(empty.getSchema()) != 0) {
+			if (rulesteps != null) {
+				for (RuleStep s : rulesteps) {
+					if (empty.getRulesteps() != null && empty.getRulesteps().size() > 0) {
+						s.update(empty.getRulesteps().get(0));
+					}
+				}
+			}
+		}
+		setSchema(empty.getSchema());
 	}
 
 

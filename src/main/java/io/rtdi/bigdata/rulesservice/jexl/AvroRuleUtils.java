@@ -1,8 +1,9 @@
-package io.rtdi.bigdata.connector.pipeline.foundation.avro;
+package io.rtdi.bigdata.rulesservice.jexl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilderException;
@@ -92,7 +93,7 @@ public class AvroRuleUtils {
 	}
 
 	public static RowType getChangeType(JexlRecord valuerecord) {
-		if (valuerecord.has(SchemaConstants.SCHEMA_COLUMN_CHANGE_TYPE)) {
+		if (valuerecord.hasField(SchemaConstants.SCHEMA_COLUMN_CHANGE_TYPE)) {
 			Object changetype = valuerecord.get(SchemaConstants.SCHEMA_COLUMN_CHANGE_TYPE);
 			if (changetype != null) {
 				return RowType.getByIdentifier(changetype.toString());
@@ -128,21 +129,5 @@ public class AvroRuleUtils {
 			return stream.toString();
 		}
 	}
-
-	/* public static String convertToSimpleJson(JexlRecord record) throws IOException {
-		ObjectMapper mapper = new AvroMapper();
-		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-			DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(record.getSchema());
-			BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
-			writer.write(record, encoder);
-			encoder.flush();
-			byte[] bytes = outputStream.toByteArray();
-
-			Object o = mapper.readerFor(ObjectNode.class)
-					.with(new AvroSchema(record.getSchema()))
-					.readValue(bytes);
-			return o.toString();
-		}
-	} */
 
 }

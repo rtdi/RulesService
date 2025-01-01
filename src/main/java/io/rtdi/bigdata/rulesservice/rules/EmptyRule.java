@@ -4,10 +4,10 @@ import org.apache.avro.Schema;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroJexlContext;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
 import io.rtdi.bigdata.kafka.avro.datatypes.AvroType;
 import io.rtdi.bigdata.kafka.avro.datatypes.IAvroDatatype;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class EmptyRule extends Rule {
@@ -25,7 +25,7 @@ public class EmptyRule extends Rule {
 	}
 
 	@Override
-	public RuleResult apply(Object value, AvroJexlContext container, boolean test) {
+	public RuleResult apply(Object value, AvroContainer container, boolean test) {
 		setSampleValue(value, test);
 		return null;
 	}
@@ -38,6 +38,15 @@ public class EmptyRule extends Rule {
 	@Override
 	public String toString() {
 		return getFieldname() + ": EmptyRule";
+	}
+
+	@Override
+	public Rule clone() {
+		EmptyRule ret = new EmptyRule();
+		ret.setDataType(getDataType());
+		ret.setFieldname(getFieldname());
+		ret.setSchemaname(getSchemaname());
+		return ret;
 	}
 
 }

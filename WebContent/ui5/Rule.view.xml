@@ -7,12 +7,28 @@
 	<controls:RulesToolPage sideExpanded="false">
 		<controls:header>
 			<tnt:ToolHeader>
-				<Text text="Rulesservice" />
+               	<Label text="Rule file"/>
 				<Input value="{/name}" width="10rem" />
                	<Label text="Output subject (empty for default)"/>
                 <Input value="{outputsubjectname}"
-                	width="15rem"
+                	width="7rem"
                  />
+				<ToolbarSpacer/>
+               	<Label text="Use sample data"/>
+				<Select
+						forceSelection="false"
+						selectedKey="{/samplefile}"
+						change=".onReadSample"
+						id="samplefile"
+						items="{
+							path: 'samplefiles>/',
+							templateShareable: false,
+							sorter: { path: 'filename' }
+						}">
+					<core:Item key="{samplefiles>filename}" text="{samplefiles>filename}" />
+				</Select>
+                   <Button icon="sap-icon://refresh" press=".onSampleRefresh" tooltip="Reload created sample data"/>
+                   <Button icon="sap-icon://arrow-bottom" press=".onSampleReapply" tooltip="Reapply sample data"/>
 				<ToolbarSpacer/>
                 <Button text="Save" press=".onSave" tooltip="Save the rule file" />
                 <Button text="Activate" press=".onActivate" tooltip="Copy the rule file to the active area" />
@@ -22,28 +38,8 @@
 			<FlexBox direction="Column" fitContainer="true">
 				<Panel height="100%">
 					<layoutData>
-						<FlexItemData growFactor="1" />
+						<FlexItemData growFactor="4" />
 					</layoutData>
-		            <headerToolbar>
-		                <OverflowToolbar style="Clear">
-		                    <ToolbarSpacer/>
-		                	<Label text="Use sample data"/>
-							<Select
-									forceSelection="false"
-									selectedKey="{/samplefile}"
-									change=".onReadSample"
-									id="samplefile"
-									items="{
-										path: 'samplefiles>/',
-										templateShareable: false,
-										sorter: { path: 'filename' }
-									}">
-								<core:Item key="{samplefiles>filename}" text="{samplefiles>filename}" />
-							</Select>
-		                    <Button icon="sap-icon://refresh" press=".onSampleRefresh" tooltip="Reload created sample data"/>
-		                    <Button icon="sap-icon://arrow-bottom" press=".onSampleReapply" tooltip="Reapply sample data"/>
-		                </OverflowToolbar>
-		            </headerToolbar>
 					<TabContainer items="{ path: '/rulesteps' }" id="rulesteps"
 									showAddNewButton="true"
 									class="sapUiResponsiveContentPadding sapUiResponsivePadding--header"
@@ -53,9 +49,8 @@
 								<content>
 							        <t:TreeTable
 							                rows="{path:'rules', parameters: {arrayNames:['rules']}}"
-									        selectionMode="Single"
+									        selectionMode="None"
 									        enableBusyIndicator="true"
-									        enableSelectAll="false"
 							                ariaLabelledBy="title">
 							            <t:extension>
 							                <OverflowToolbar style="Clear">
@@ -153,7 +148,7 @@
 									            <Label text="Sample result"/>
 									            <t:template>
 									                <Button text="{sampleresult}" icon="{path: 'sampleresult', formatter: '.resulttypeFormatter'}"
-									                	visible="{= (${sampleresult} !== null &amp;&amp; (${type} === 'PrimitiveRule' || ${type}.startsWith('TestSet'))) }" />
+									                	visible="{= (!!${sampleresult} &amp;&amp; (${type} === 'PrimitiveRule' || ${type}.startsWith('TestSet'))) }" />
 									            </t:template>
 									        </t:Column>
 									        <t:Column>
@@ -170,7 +165,11 @@
 					</TabContainer>
 				</Panel>
 				<Title id="formulaeditorlabel" text="Rule Formula"/>
-				<ce:CodeEditor id="formulaeditor" height="300px" type="text" editable="false" liveChange=".onEditorChange" />
+				<ce:CodeEditor id="formulaeditor" type="text" editable="false" liveChange=".onEditorChange" >
+					<ce:layoutData>
+						<FlexItemData growFactor="1" />
+					</ce:layoutData>
+				</ce:CodeEditor>
 			</FlexBox>
 		</controls:mainContents>
 	</controls:RulesToolPage>

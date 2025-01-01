@@ -1,14 +1,15 @@
-package io.rtdi.bigdata.connector.pipeline.foundation.avro;
+package io.rtdi.bigdata.rulesservice.jexl;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.commons.jexl3.JexlContext;
 
-public interface AvroJexlContext extends JexlContext {
+public interface AvroContainer extends JexlContext {
 
 	/**
 	 * Move the collected change values into the record.
@@ -20,9 +21,9 @@ public interface AvroJexlContext extends JexlContext {
 
 	String getPath();
 
-	AvroJexlContext getParent();
+	AvroContainer getParent();
 
-	void setParent(AvroJexlContext parent);
+	void setParent(AvroContainer parent);
 
 	Field getParentField();
 
@@ -33,5 +34,7 @@ public interface AvroJexlContext extends JexlContext {
 	void addRuleresult(JexlRecord r) throws IOException;
 
 	Schema getSchema();
+
+	Map<String, Object> toMap();
 
 }
