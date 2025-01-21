@@ -2,7 +2,6 @@ package io.rtdi.bigdata.rulesservice;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -12,8 +11,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,48 +29,29 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import org.apache.avro.Schema;
-import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Parser;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.common.KafkaFuture;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Produced;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.confluent.kafka.schemaregistry.ParsedSchema;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
-import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.rtdi.appcontainer.utils.UsageStatisticSender;
-import io.rtdi.bigdata.kafka.avro.AvroUtils;
-import io.rtdi.bigdata.kafka.avro.datatypes.AvroType;
-import io.rtdi.bigdata.kafka.avro.datatypes.IAvroDatatype;
-import io.rtdi.bigdata.kafka.avro.recordbuilders.SchemaBuilder;
-import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
 import io.rtdi.bigdata.rulesservice.config.RuleFileDefinition;
 import io.rtdi.bigdata.rulesservice.config.RuleFileName;
 import io.rtdi.bigdata.rulesservice.config.RuleStep;
 import io.rtdi.bigdata.rulesservice.config.ServiceSettings;
+import io.rtdi.bigdata.rulesservice.config.ServiceStatus;
 import io.rtdi.bigdata.rulesservice.config.TopicRule;
-import io.rtdi.bigdata.rulesservice.jexl.JexlArray;
 import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 import io.rtdi.bigdata.rulesservice.rest.SampleData;
-import io.rtdi.bigdata.rulesservice.rules.ArrayRule;
-import io.rtdi.bigdata.rulesservice.rules.RecordRule;
-import io.rtdi.bigdata.rulesservice.rules.Rule;
-import io.rtdi.bigdata.rulesservice.rules.UnionRule;
+import io.rtdi.bigdata.rulesservice.rules.RuleUtils;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -92,6 +74,10 @@ public class RulesService implements ServletContextListener {
 	private String properties;
 	private Map<String, String> propertiesmap;
 	private Admin admin;
+	/**
+	 * Map<Inputtopic, Map<Instance Number, RuleFileKStream>>
+	 */
+	private Map<String, RuleFileKStream> services = new HashMap<>();
 
 	/**
 	 * Default constructor.
@@ -100,47 +86,50 @@ public class RulesService implements ServletContextListener {
 		super();
 	}
 
-	public void start() throws FileNotFoundException, IOException {
-		/*
-		 * Two topics can use the same schema, yet have different rules.
-		 * One topic can have multiple schemas.
-		 * Rules consists of multiple rule steps to build rules on top of previous rules
-		 *
-		 * Topic = Map<Schema, RuleGroup<Schema>>               One topic has for each schema one RuleGroup
-		 * RuleGroup<Schema> = List<RuleStep<OutputSchema>>     One RuleGroup is for a single schema and consists of multiple RuleSteps
-		 * RuleStep<OutputSchema>                               One RuleStep is an intermediate transformation; Note that the output if a rule step can have more fields than the topic schema
-		 *
-		 */
-		StreamsBuilder builder = new StreamsBuilder();
-		KStream<Bytes, Bytes> transformation = builder.stream(
-				"input-topic",
-				Consumed.with(Serdes.Bytes(), Serdes.Bytes()));
-		KStream<Bytes, Bytes> result = transformation.mapValues(value -> value);
-		result.to("output-topic", Produced.with(Serdes.Bytes(), Serdes.Bytes()));
-		StreamsConfig streamsConfig = new StreamsConfig(propertiesmap);
-		KafkaStreams streams = new KafkaStreams(builder.build(), streamsConfig);
-		streams.start();
-		streams.close();
-	}
-
 	public Map<String, String> getKafkaProperties() {
 		return propertiesmap;
 	}
 
 	public String getBootstrapServers() {
-		return null;
+		if (propertiesmap != null) {
+			return propertiesmap.get("bootstrap.servers");
+		} else {
+			return null;
+		}
 	}
 
 	public long getRowsProduced() {
-		return 0;
+		if (services != null) {
+			long count = 0L;
+			for (RuleFileKStream service : services.values()) {
+				count += service.getRowsprocessed();
+			}
+			return count;
+		} else {
+			return 0L;
+		}
 	}
 
 	public String getState() {
-		return null;
+		if (services != null && services.size() > 0) {
+			return "RUNNING";
+		} else {
+			return "IDLE";
+		}
 	}
 
 	public Long getLastDataTimestamp() {
-		return null;
+		if (services != null) {
+			long ts = 0L;
+			for (RuleFileKStream service : services.values()) {
+				if (ts < service.getLastprocessedtimestamp()) {
+					ts = service.getLastprocessedtimestamp();
+				}
+			}
+			return ts;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -190,8 +179,105 @@ public class RulesService implements ServletContextListener {
 				log.info("No JNDI resource found for name <java:comp/env/rulegroups>, hence the rules root directory is the default <{}>", rulegroupdir);
 			}
 			configure();
+			startService();
 		} catch (Exception e) {
 			this.globalexception = e;
+		}
+	}
+
+	public void startService() throws IOException {
+		stopService();
+		Map<String, TopicRule> topicrulefiles = getTopicRuleFiles();
+		for (Entry<String, TopicRule> entry : topicrulefiles.entrySet()) {
+			TopicRule r = entry.getValue();
+			RuleFileKStream rule = new RuleFileKStream(r.getRulefiles(), this, r.getInputtopicname(), r.getOutputtopicname(), r.getInstances());
+			if (rule.getRulefiledefinitions().size() > 0) {
+				services.put(r.getInputtopicname(), rule);
+				rule.start();
+				log.info("Thread for topic {} started", r.getInputtopicname());
+			} else {
+				log.info("Topic {} has no active rules", r.getInputtopicname());
+			}
+		}
+	}
+
+	public void startService(String topicname) throws IOException, InterruptedException {
+		stopService(topicname);
+		Map<String, TopicRule> topicrules = getTopicRuleFiles();
+		TopicRule r = topicrules.get(topicname);
+		if (r != null) {
+			RuleFileKStream rule = new RuleFileKStream(r.getRulefiles(), this, r.getInputtopicname(), r.getOutputtopicname(), r.getInstances());
+			if (rule.getRulefiledefinitions().size() > 0) {
+				services.put(r.getInputtopicname(), rule);
+				rule.start();
+				log.info("Thread for topic {} started", r.getInputtopicname());
+			} else {
+				log.info("Topic {} has no active rules", r.getInputtopicname());
+			}
+		}
+	}
+
+	public void startFailedServices() throws IOException {
+		for (Entry<String, RuleFileKStream> entry : services.entrySet()) {
+			RuleFileKStream stream = entry.getValue();
+			if (! stream.isAlive()) {
+				RuleFileKStream rule = new RuleFileKStream(stream.getRulefiles(), this, stream.getInputtopicname(), stream.getOutputtopicname(), stream.getInstances());
+				if (rule.getRulefiledefinitions().size() > 0) {
+					services.put(rule.getInputtopicname(), rule);
+					rule.start();
+					log.info("Thread for topic {} re-started", rule.getInputtopicname());
+				} else {
+					log.info("Topic {} has no active rules", rule.getInputtopicname());
+				}
+			}
+		}
+	}
+
+	public ServiceStatus getServiceStatus() throws IOException {
+		return new ServiceStatus(this);
+	}
+
+	public void stopService() throws IOException {
+		/*
+		 * Signal all to stop
+		 */
+		for (RuleFileKStream service : services.values()) {
+			service.interrupt();
+		}
+		/*
+		 * Remove all stopped instances within 1 minute
+		 */
+		long until = System.currentTimeMillis() + 60000L;
+		while (System.currentTimeMillis() < until && services.size() > 0) {
+			Iterator<Entry<String, RuleFileKStream>> iter = services.entrySet().iterator();
+			while (iter.hasNext()) {
+				Entry<String, RuleFileKStream> service = iter.next();
+				try {
+					if (service.getValue().join(Duration.ofSeconds(2))) {
+						iter.remove();
+						log.info("Thread for topic {} stopped", service.getKey());
+					}
+				} catch (InterruptedException e) {
+					// NOOP as we have to close all resources, no matter what
+				}
+			}
+		}
+	}
+
+	public void stopService(String topicname) throws IOException, InterruptedException {
+		RuleFileKStream service = services.get(topicname);
+		if (service != null) {
+			/*
+			 * Signal all to stop
+			 */
+			service.interrupt();
+			/*
+			 * Remove within 1 minute
+			 */
+			if (service.join(Duration.ofSeconds(60))) {
+				services.remove(topicname);
+				log.info("Thread for topic {} stopped", topicname);
+			}
 		}
 	}
 
@@ -239,7 +325,7 @@ public class RulesService implements ServletContextListener {
 		return groups;
 	}
 
-	public List<RuleFileName> getAllRuleGroups() {
+	public List<RuleFileName> getAllRuleFiles() {
 		List<RuleFileName> groups = RuleFileDefinition.getAllRuleFiles(rulegroupdir);
 		return groups;
 	}
@@ -289,32 +375,27 @@ public class RulesService implements ServletContextListener {
 		settings.setKafkaconnected(false);
 		if (admin != null) {
 			try {
-				admin.describeCluster();
+				DescribeClusterResult result = admin.describeCluster();
+				result.nodes().get(2, TimeUnit.SECONDS);
 				settings.setKafkaconnected(true);
 			} catch (Exception e) {
 				log.error("getConfig() ran into an error", e);
 				globalexception = e;
 			}
 		}
+		if (services.size() > 0) {
+			settings.setServicerunning(true);
+		} else {
+			settings.setServicerunning(false);
+		}
 		settings.setErrormessage(globalexception != null ? globalexception.getMessage() : null);
 		return settings;
 	}
 
-	public Collection<TopicRule> getTopicRules() throws IOException {
-		ObjectMapper om = new ObjectMapper();
+	public Collection<TopicRule> getTopicsAndRules() throws IOException {
 		ListTopicsResult topicsresult = admin.listTopics();
 		KafkaFuture<Set<String>> future = topicsresult.names();
-		Path topicrules = rulegroupdir.resolve("topics");
-		File topicruledir = topicrules.toFile();
-		Map<String, File> fileset = new HashMap<>();
-		if (topicruledir.isDirectory()) {
-			File[] files = topicruledir.listFiles();
-			for(File f : files) {
-				if (f.isFile() && f.getName().endsWith(".json")) {
-					fileset.put(f.getName().substring(0, f.getName().length()-5), f);
-				}
-			}
-		}
+		Map<String, TopicRule> fileset = getTopicRuleFiles();
 		Collection<String> l;
 		try {
 			l = future.get(20, TimeUnit.SECONDS);
@@ -323,17 +404,37 @@ public class RulesService implements ServletContextListener {
 		}
 		TreeSet<TopicRule> out = new TreeSet<>();
 		for (String topicname : l) {
-			File f = fileset.get(topicname);
-			TopicRule tr;
-			if (f != null) {
-				tr = om.readValue(f, TopicRule.class);
+			TopicRule tr = fileset.get(topicname);
+			if (tr != null) {
+				out.add(tr);
 			} else {
-				tr = new TopicRule(topicname);
+				out.add(new TopicRule(topicname));
 			}
-			out.add(tr);
 		}
 		return out;
 	}
+
+	/**
+	 * @return a map<inputtopicname, TopicRule> data
+	 * @throws IOException
+	 */
+	public Map<String, TopicRule> getTopicRuleFiles() throws IOException {
+		ObjectMapper om = new ObjectMapper();
+		Path topicrules = rulegroupdir.resolve("topics");
+		File topicruledir = topicrules.toFile();
+		Map<String, TopicRule> fileset = new HashMap<>();
+		if (topicruledir.isDirectory()) {
+			File[] files = topicruledir.listFiles();
+			for(File f : files) {
+				if (f.isFile() && f.getName().endsWith(".json")) {
+					TopicRule tr = om.readValue(f, TopicRule.class);
+					fileset.put(f.getName().substring(0, f.getName().length()-5), tr);
+				}
+			}
+		}
+		return fileset;
+	}
+
 
 	public List<TopicRule> saveTopicRules(List<TopicRule> input) {
 		Path topicruledir = rulegroupdir.resolve("topics");
@@ -357,7 +458,14 @@ public class RulesService implements ServletContextListener {
 						topicrule.setModified(null);
 						topicrule.setInfo("saved");
 					} catch (IOException e) {
+						log.error("Failed to save the file for topic <{}>", topicrule.getInputtopicname(), e);
 						topicrule.setInfo("Failed to save the topic file (" + e.getMessage() + ")");
+					}
+					try {
+						startService(topicrule.getInputtopicname());
+					} catch (IOException | InterruptedException e) {
+						log.error("Failed to start the service for the topic <{}>", topicrule.getInputtopicname(), e);
+						topicrule.setInfo("Failed to start the service for the topic <" + topicrule.getInputtopicname() + ">: " + e.getMessage());
 					}
 				}
 			} else {
@@ -380,6 +488,11 @@ public class RulesService implements ServletContextListener {
 
 	private void close() {
 		log.info("Closing all resources");
+		try {
+			stopService();
+		} catch (IOException e) {
+			log.error("Stopping the services failed - ignored", e);
+		}
 		if (admin != null) {
 			try {
 				admin.close(Duration.ofSeconds(10));
@@ -406,28 +519,6 @@ public class RulesService implements ServletContextListener {
 		}
 	}
 
-	public void createCleansedSchema(String subjectname, String outputsubjectname) throws IOException, RestClientException {
-		SchemaMetadata metadata = schemaclient.getLatestSchemaMetadata(subjectname);
-		// check if we know about that particular id already
-		String schemastring = metadata.getSchema();
-		org.apache.avro.Schema.Parser parser = new org.apache.avro.Schema.Parser();
-		org.apache.avro.Schema schema = parser.parse(schemastring);
-		// check if it has the _audit field already
-		if (schema.getField(ValueSchema.AUDIT) == null) {
-			// if no, derive the new schema
-			SchemaBuilder outputschemabuilder = new SchemaBuilder(schema.getName() + "_CLEANSED", schema, false);
-			ValueSchema.addAuditField(outputschemabuilder);
-			outputschemabuilder.build();
-			schema = outputschemabuilder.getSchema();
-			AvroSchemaProvider provider = new AvroSchemaProvider();
-			io.confluent.kafka.schemaregistry.client.rest.entities.Schema schemaentity = new io.confluent.kafka.schemaregistry.client.rest.entities.Schema(
-					outputsubjectname, 0, 0, new SchemaString(schema.toString()));
-			ParsedSchema parsed = provider.parseSchemaOrElseThrow(schemaentity , false, false);
-			// register the schema - if already known the API call just returns the schema id
-			schemaclient.register(outputsubjectname, parsed);
-		}
-	}
-
 	public RuleStep applySampleData(RuleFileDefinition input, Integer stepindex) throws IOException {
 		if (input.getSchema() == null) {
 			throw new PropertiesException("The Rule file does not contain the schema information");
@@ -435,7 +526,7 @@ public class RulesService implements ServletContextListener {
 		Parser parser = new Schema.Parser();
 		Schema schema = parser.parse(input.getSchema());
 		RuleStep step = input.getRulesteps().get(stepindex);
-		JexlRecord rec = (JexlRecord) getSampleValue(step, schema);
+		JexlRecord rec = (JexlRecord) RuleUtils.getSampleValue(step, schema);
 		step.apply(rec, rec, true);
 		rec.mergeReplacementValues();
 		step.updateSampleOutput(rec);
@@ -457,87 +548,12 @@ public class RulesService implements ServletContextListener {
 		return input;
 	}
 
-	private static Object getSampleValue(Rule rule, Schema schema) throws PropertiesException {
-		if (schema != null) {
-			switch (schema.getType()) {
-			case ARRAY:
-				if (rule instanceof ArrayRule ar) {
-					if (ar.getRules() != null && ar.getRules().size() > 0) {
-						JexlArray<Object> a = new JexlArray<>(schema, null);
-						Object value = getSampleValue(rule.getRules().get(0), schema.getElementType());
-						if (value != null) {
-							a.add(value);
-						}
-						return a;
-					}
-				} else {
-					throw new PropertiesException("There is a mismatch between the schema and rule type for the field <" + rule.getFieldname() + ">");
-				}
-				break;
-			case RECORD:
-				if (rule instanceof RecordRule) {
-					if (rule.getRules() != null) {
-						JexlRecord rec = new JexlRecord(schema, null);
-						for ( Rule r : rule.getRules()) {
-							if (r.getFieldname() != null) {
-								Field field = schema.getField(r.getFieldname());
-								if (field != null) {
-									Schema fieldschema = AvroUtils.getBaseSchema(field.schema());
-									rec.put(r.getFieldname(), getSampleValue(r, fieldschema));
-								}
-							}
-						}
-						return rec;
-					}
-				} else {
-					throw new PropertiesException("There is a mismatch between the schema and rule type for the field <" + rule.getFieldname() + ">");
-				}
-				break;
-			case UNION:
-				if (rule instanceof UnionRule) {
-					if (rule.getRules() != null) {
-						for ( Rule r : rule.getRules()) {
-							if (r.getSampleinput() != null) {
-								return getSampleValue(r, findUnionSchema(rule.getSchemaname(), schema.getTypes()));
-							}
-						}
-					}
-				}
-				break;
-			case BOOLEAN:
-			case BYTES:
-			case DOUBLE:
-			case ENUM:
-			case FIXED:
-			case FLOAT:
-			case INT:
-			case LONG:
-			case MAP:
-			case NULL:
-			case STRING:
-				IAvroDatatype dt = AvroType.getAvroDataType(schema);
-				if (dt != null) {
-					return dt.convertToInternal(rule.getSampleinput());
-				}
-				break;
-			default:
-				break;
-			}
-		}
-		return null;
-	}
-
-	private static Schema findUnionSchema(String schemaname, List<Schema> list) {
-		for (Schema s : list) {
-			if (s.getFullName().equals(schemaname)) {
-				return s;
-			}
-		}
-		return null;
-	}
-
 	public CachedSchemaRegistryClient getSchemaclient() {
 		return schemaclient;
+	}
+
+	public Map<String, RuleFileKStream> getServices() {
+		return services;
 	}
 
 }

@@ -1,6 +1,6 @@
 sap.ui.define(["sap/ui/core/mvc/Controller"],
 function(Controller) {"use strict";
-return Controller.extend("io.rtdi.bigdata.rulesservice.Rule", {
+return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rule", {
 	onInit : function() {
 		var model = new sap.ui.model.json.JSONModel();
 		var subjectname = jQuery.sap.getUriParameters().get("subject");

@@ -17,7 +17,7 @@ Docker image here: [dockerhub](https://hub.docker.com/r/rtdi/rulesservice)
 
 * Payload (value) in Avro Format
 * Apache Kafka connection with the permissions to run as a KStream
-* Schema Registry connection to read and write schema definitions
+* Schema Registry connection to read (and write) schema definitions
 
 
 ## Installation and testing
@@ -37,7 +37,7 @@ The default login for this startup method is: **rtdi / rtdi!io**
 
 The better start command is to mount two host directories into the container, the rtdiconfig directory where all settings made when configuring the connector will be stored permanently and the security directory for web server specific settings like user database and SSL certificates.
 
-    docker run -d -p 80:8080 -p 443:8443 --rm -v /data/files:/data/ \
+    docker run -d -p 80:8080 -p 443:8443 --rm \
        -v /home/dir/rulesservice:/apps/rulesservice \
        -v /home/dir/security:/usr/local/tomcat/conf/security \
         --name rulesservice  rtdi/rulesservice
@@ -52,6 +52,19 @@ For proper start commands, especially https and security related, see the [Conne
 The first step is to connect the application to a Kafka server and the schema registry. In the settings screen the normal Kafka properties file data can be pasted and saved. By default the file location is `/apps/rulesservice/settings/kafka.properties` from the container's point of view.
 
 <img src="docs/media/Config.png" width="50%">
+
+
+```
+basic.auth.credentials.source=USER_INFO
+schema.registry.basic.auth.user.info=XXXXXXXXXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+schema.registry.url=https://XXXXXXXXXX.eu-central-1.aws.confluent.cloud
+
+bootstrap.servers=XXXXXXXXX.eu-central-1.aws.confluent.cloud:9092
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule \
+required username="XXXXXXXXXXXXXXXX" password="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+```
 
 
 ### Step 2: Define Rules
@@ -78,9 +91,14 @@ The screen also allows to copy the rule files being used into the active folder 
 
 ### Result
 
-The input schema is copied as new schema, which has an additional `_audit` field, containing all audit results.
+If the input schema has an `_audit` field, it is assumed the schema contains the structure for the rule results already. This would be a preferred case, because input schema = output schema.
+In all other cases the input schema's latest version is read from the schema registry and the additional `_audit` structure is being created. This will be the output schema.
+
+The reason for using the latest is because of schema evolution scenarios. It might happen that schema id 2 has an additional field `NAME` compared to schema id 1. So the subject evolved from schema 1 to 2. The KStream does receive a message with schema 2 first, adds the `_audit` field and it is saved in the schema registry. The next message has an input schema 1 and if that would get registered as output schema next, it would fail due to the missing `NAME` field. Hence both must be outputted with the latest schema version always. This also explains why adding the `_audit` on the original input schema already is preferred.
 The overall rule result is stored (did it pass all tests?), a list of all rules executed and their individual results.
 Querying this data allows detailed reporting which records were processed by what rule and the results.
+
+The exact Avro schema field definition can be found [here](docs/audit-schema.md)
 
 <img src="docs/media/RuleResult.png" width="50%">
 
@@ -138,7 +156,7 @@ For the addresstype example, the `Until-passes` test set is best suited with the
  - `'SHIPPING' == addresstype`
  - `'BILLING' == addresstype`
  
-If the addresstype is `SHIPPING`, then the first test returns false, hence the second is executed also returning false and the third condition returns true --> the test-set is Pass.
+If the addresstype is `SHIPPING`, then the first test returns false, hence the second is executed also returning false and the third condition returns true --> no more tests being made and the test-set is Pass.
 
 If the addresstype is `ABCD`, none of the conditions will return true --> the test-set is Fail.
 
@@ -152,12 +170,17 @@ Each record also has a `(more)` node to enter rules that do not belong to a sing
 
 ### Rule Steps
 
-Another typical scenario is to standardize the values first, e.g. gender should be `M`, `F`, `X`, `?` only and then create rules based on the standardized values. The rule file consists of multiple tabs - the rule steps - and each tab is executed one after the other.
+Another typical scenario is to standardize the values first, e.g. gender should be `M`, `F`, `X`, `?` only and then create rules based on the standardized values. In other words, rules build on each other. To enable that, the rule file consists of multiple tabs - the rule steps - and each tab is executed one after the other.
 
 
 ### Rule syntax
 
-Note: The library used here is [Apache JEXL](https://commons.apache.org/proper/commons-jexl/reference/syntax.html).
+For more examples [see](docs/rule-syntax.md)
+
+
+### FAQs
+
+ * Can a new output column be created via a formula? No, the output schema is always derived from the input schema, for two reasons. First, if adding fields would be possible, it might collide when the input subject is evolved to a new version. The other reason is performance. It would require to create a new output message from scratch, copying the majority of the data even if nothing has changed. That would be too expensive. So the only option is to add the column to the input schema first.
 
 
 ## Licensing

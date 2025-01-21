@@ -112,7 +112,7 @@ public class JexlRecord extends Record implements AvroContainer {
 		} else {
 			IAvroDatatype t = AvroType.getAvroDataType(field.schema());
 			if (t != null) {
-				value = t.convertToJava(value);
+				value = t.convertToInternal(value);
 			} else {
 				throw new AvroRuntimeException("Not a valid schema for field: " + field.name());
 			}
@@ -133,7 +133,7 @@ public class JexlRecord extends Record implements AvroContainer {
 		} else {
 			IAvroDatatype t = AvroType.getAvroDataType(field.schema());
 			if (t != null) {
-				v = t.convertToJava(v);
+				v = t.convertToInternal(v);
 			} else {
 				throw new AvroRuntimeException("Not a valid schema for field: " + field.name());
 			}

@@ -2,7 +2,7 @@ sap.ui.define([
 	'sap/tnt/ToolPage',
 	'./library'
 ], function(ToolPage) {
-  return ToolPage.extend("io.rtdi.bigdata.rulesservice.lib.RulesToolPage", {
+  return ToolPage.extend("io.rtdi.bigdata.rulesservice.ui5.lib.RulesToolPage", {
 		metadata : {
 			properties : {
 			},
@@ -23,7 +23,7 @@ sap.ui.define([
 							new sap.tnt.NavigationListItem({
 								text: "Home",
 								icon: "sap-icon://home",
-								href: "./Home.html",
+								href: "../index.html",
 								tooltip: "Home screen"
 							}),
 							new sap.tnt.NavigationListItem({

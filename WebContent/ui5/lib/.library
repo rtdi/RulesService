@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <library xmlns="http://www.sap.com/sap.ui.library.xsd" >
 
-  <name>io.rtdi.bigdata.rulesservice</name>
+  <name>io.rtdi.bigdata.rulesservice.ui5</name>
   <vendor>rtdi.io</vendor>
 
-  <documentation>Helper controls for the rulesservice app</documentation>
+  <documentation>Helper controls for the rulesservice.ui5 app</documentation>
 
   <dependencies>
 	<dependency>

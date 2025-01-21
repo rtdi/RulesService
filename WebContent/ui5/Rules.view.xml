@@ -1,6 +1,6 @@
 <mvc:View height="100%" class="sapUiSizeCompact"
-	controllerName="io.rtdi.bigdata.rulesservice.Rules"
-	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:l="sap.ui.layout" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.lib">
+	controllerName="io.rtdi.bigdata.rulesservice.ui5.Rules"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:l="sap.ui.layout" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.ui5.lib">
 	<controls:RulesToolPage sideExpanded="false">
 		<controls:header>
 			<tnt:ToolHeader>

@@ -54,7 +54,8 @@ public class SampleData {
 		this.topic = recordset.topic();
 		this.partition = recordset.partition();
 		this.filename = null;
-		this.payload = AvroRuleUtils.convertToJson(foundrecord, writerschema);
+		this.payload = foundrecord.toString(); // convert to a simple json without data types
+		// this.payload = AvroRuleUtils.convertToJson(foundrecord, writerschema);
 		this.setSchema(writerschema.toString());
 		if (subjects != null && subjects.size() > 0) {
 			Iterator<String> iter = subjects.iterator();

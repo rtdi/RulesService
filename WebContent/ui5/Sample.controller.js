@@ -1,7 +1,7 @@
 sap.ui.define(["sap/ui/core/mvc/Controller"],
 	function(Controller) {
 		"use strict";
-		return Controller.extend("io.rtdi.bigdata.rulesservice.Sample", {
+		return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Sample", {
 			onInit: function() {
 				var model = new sap.ui.model.json.JSONModel();
 				this.getView().setModel(model);

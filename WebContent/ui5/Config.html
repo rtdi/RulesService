@@ -12,7 +12,7 @@
 		data-sap-ui-xx-bindingSyntax="complex"
 		data-sap-ui-xx-supportedLanguages="en"
 		data-sap-ui-resourceroots='{
-			"io.rtdi.bigdata.rulesservice": "./"
+			"io.rtdi.bigdata.rulesservice.ui5": "./"
 		}'
 		data-sap-ui-async="true"
 		data-sap-ui-compatVersion="edge"
@@ -22,7 +22,7 @@
 		sap.ui.getCore().attachInit(function () {
 			document.body.innerHTML=''
 			new sap.ui.xmlview({
-				viewName: "io.rtdi.bigdata.rulesservice.Config"
+				viewName: "io.rtdi.bigdata.rulesservice.ui5.Config"
 				}).placeAt("content");
 			});
 	</script>

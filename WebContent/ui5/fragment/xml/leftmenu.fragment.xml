@@ -1,9 +1,0 @@
-<core:FragmentDefinition
-   xmlns:tnt="sap.tnt"
-   xmlns:core="sap.ui.core">
-					<tnt:NavigationListItem text="Home" icon="sap-icon://home" href="./Home.html" />
-					<tnt:NavigationListItem text="Topics" icon="sap-icon://inventory" href="./Topics.html" />
-					<tnt:NavigationListItem text="Rules" icon="sap-icon://document-text" href="./Rules.html" />
-					<tnt:NavigationListItem text="Sample" icon="sap-icon://download" href="./Sample.html" />
-					<tnt:NavigationListItem text="Config" icon="sap-icon://wrench" href="./Config.html" />
-</core:FragmentDefinition>

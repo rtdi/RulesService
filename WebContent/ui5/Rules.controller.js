@@ -1,6 +1,6 @@
 sap.ui.define(["sap/ui/core/mvc/Controller"],
 function(Controller) {"use strict";
-return Controller.extend("io.rtdi.bigdata.rulesservice.Rules", {
+return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rules", {
 	onInit : function() {
 		var subjectsmodel = new sap.ui.model.json.JSONModel();
 		subjectsmodel.attachRequestFailed(function(event) {

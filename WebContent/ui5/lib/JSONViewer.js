@@ -95,7 +95,7 @@ function(Control) {
 
       
 	var control = Control.extend(
-		"io.rtdi.bigdata.rulesservice.lib.JSONViewer",
+		"io.rtdi.bigdata.rulesservice.ui5.lib.JSONViewer",
 		{
 			metadata : {
 				properties : {

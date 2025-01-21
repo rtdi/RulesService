@@ -15,9 +15,12 @@ import org.apache.avro.Schema;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.rtdi.bigdata.kafka.avro.RowType;
+import io.rtdi.bigdata.rulesservice.RulesService;
 import io.rtdi.bigdata.rulesservice.jexl.AvroRuleUtils;
 import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
+import io.rtdi.bigdata.rulesservice.rules.RuleUtils;
 
 public class RuleFileDefinition {
 	private Path name;
@@ -25,6 +28,7 @@ public class RuleFileDefinition {
 	private String outputsubjectname;
 	private String samplefile;
 	private String schema;
+	private Schema schemadef;
 
 	private List<RuleStep> rulesteps;
 	/**
@@ -45,6 +49,7 @@ public class RuleFileDefinition {
 	}
 
 	public RuleFileDefinition(Schema schema) {
+		schemadef = schema;
 		this.schema = schema.toString();
 	}
 
@@ -87,7 +92,7 @@ public class RuleFileDefinition {
 	 * @param schemanname the rule requires as input
 	 * @param name depicts a relative path to the json file
 	 * @param active if true, it goes into the active folder and returns that version, else the inactive folder with intermediate files
-	 * @return
+	 * @return the RuleFileDefinition or null, if it not exists as active/inactive as requested
 	 * @throws IOException
 	 */
 	public static RuleFileDefinition load(Path rootdir, String subjectname, Path name, boolean active) throws IOException {
@@ -99,12 +104,16 @@ public class RuleFileDefinition {
 		}
 		String activedir = getActivePath(active);
 		Path filepath = rootdir.resolve(subjectname).resolve(activedir).resolve(name);
-		ObjectMapper om = new ObjectMapper();
-		RuleFileDefinition rg = om.readValue(filepath.toFile(), RuleFileDefinition.class);
-		rg.name = name;
-		rg.inputsubjectname = subjectname;
-		rg.setActive(active);
-		return rg;
+		if (filepath.toFile().isFile()) {
+			ObjectMapper om = new ObjectMapper();
+			RuleFileDefinition rg = om.readValue(filepath.toFile(), RuleFileDefinition.class);
+			rg.name = name;
+			rg.inputsubjectname = subjectname;
+			rg.setActive(active);
+			return rg;
+		} else {
+			return null;
+		}
 	}
 
 	private static String getActivePath(boolean active) {
@@ -296,5 +305,22 @@ public class RuleFileDefinition {
 		setSchema(empty.getSchema());
 	}
 
+	public static RuleFileDefinition createEmptyRuleFileDefinition(String subjectname, RulesService service) throws IOException, RestClientException {
+		org.apache.avro.Schema schema = service.getLatestSchema(subjectname);
+		RuleFileDefinition rg = new RuleFileDefinition(schema);
+		rg.setInputsubjectname(subjectname);
+		RuleStep step = new RuleStep("next step", schema);
+		rg.addRuleStep(step);
+		RuleUtils.addRules(step, schema);
+		return rg;
+	}
+
+	public Schema schema() {
+		if (schemadef == null) {
+			Schema.Parser p = new Schema.Parser();
+			schemadef = p.parse(schema);
+		}
+		return schemadef;
+	}
 
 }
