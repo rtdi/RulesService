@@ -1,0 +1,177 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.ui5.Rule"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:t="sap.ui.table"
+	xmlns:ce="sap.ui.codeeditor" xmlns:tnt="sap.tnt"
+	xmlns:controls="io.rtdi.bigdata.rulesservice.ui5.lib"
+>
+	<controls:RulesToolPage sideExpanded="false">
+		<controls:header>
+			<tnt:ToolHeader>
+               	<Label text="Rule file"/>
+				<Input value="{/name}" width="10rem" />
+               	<Label text="Output subject (empty for default)"/>
+                <Input value="{outputsubjectname}"
+                	width="7rem"
+                 />
+				<ToolbarSpacer/>
+               	<Label text="Use sample data"/>
+				<Select
+						forceSelection="false"
+						selectedKey="{/samplefile}"
+						change=".onReadSample"
+						id="samplefile"
+						items="{
+							path: 'samplefiles>/',
+							templateShareable: false,
+							sorter: { path: 'filename' }
+						}">
+					<core:Item key="{samplefiles>filename}" text="{samplefiles>filename}" />
+				</Select>
+                   <Button icon="sap-icon://refresh" press=".onSampleRefresh" tooltip="Reload created sample data"/>
+                   <Button icon="sap-icon://arrow-bottom" press=".onSampleReapply" tooltip="Reapply sample data"/>
+				<ToolbarSpacer/>
+                <Button text="Save" press=".onSave" tooltip="Save the rule file" />
+                <Button text="Activate" press=".onActivate" tooltip="Copy the rule file to the active area" />
+			</tnt:ToolHeader>
+		</controls:header>
+		<controls:mainContents>
+			<FlexBox direction="Column" fitContainer="true">
+				<Panel height="100%">
+					<layoutData>
+						<FlexItemData growFactor="4" />
+					</layoutData>
+					<TabContainer items="{ path: '/rulesteps' }" id="rulesteps"
+									showAddNewButton="true"
+									class="sapUiResponsiveContentPadding sapUiResponsivePadding--header"
+									addNewButtonPress="onAddTab" itemClose=".onCloseTab">
+						<items >
+							<TabContainerItem name="{fieldname}">
+								<content>
+							        <t:TreeTable
+							                rows="{path:'rules', parameters: {arrayNames:['rules']}}"
+									        selectionMode="None"
+									        enableBusyIndicator="true"
+							                ariaLabelledBy="title">
+							            <t:extension>
+							                <OverflowToolbar style="Clear">
+							                    <Button icon="sap-icon://arrow-left" press=".onMoveLeft" tooltip="Move tab left" />
+							                    <Input value="{fieldname}" width="10rem" />
+							                    <Button icon="sap-icon://arrow-right" press=".onMoveRight" tooltip="Move tab right" />
+							                    <ToolbarSpacer/>
+							                    <Button text="Recalculate" press=".onStepCalc" tooltip="Recalculate this tab based on the entered sample values"/>
+							                </OverflowToolbar>
+							            </t:extension>
+							            <t:rowMode>
+							            	<t:rowmodes.Auto/>
+							            </t:rowMode>
+									    <t:columns>
+									        <t:Column>
+									            <Label text="Fieldname"/>
+									            <t:template>
+									                <Text text="{fieldname}" wrapping="false" renderWhitespace="false" />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Data type"/>
+									            <t:template>
+									                <Text text="{fielddatatype}" wrapping="false" renderWhitespace="false" />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Sample value"/>
+									            <t:template>
+									                <Input value="{sampleinput}" enabled="{= ${type} !== 'RecordRule' &amp;&amp; ${type} !== 'GenericRules' &amp;&amp; ${type} !== 'ArrayRule' &amp;&amp; ${type} !== 'UnionRule' &amp;&amp; ${type} !== 'UnionRule' &amp;&amp; !!${fieldname} }" />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Rule type"/>
+									            <t:template>
+													<Select
+														forceSelection="false"
+														visible="{= ${type} !== 'RecordRule' &amp;&amp; ${type} !== 'GenericRules' &amp;&amp; ${type} !== 'ArrayRule' &amp;&amp; ${type} !== 'UnionRule' }"
+														selectedKey="{type}"
+														change=".onChangeRuleType" >
+														<core:Item key="EmptyRule" text="----" />
+														<core:Item key="PrimitiveRule" text="Single test" />
+														<core:Item key="TestSetAll" text="Test all" />
+														<core:Item key="TestSetFirstFail" text="Until failed" />
+														<core:Item key="TestSetFirstPass" text="Until passes" />
+													</Select>
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Rule name"/>
+									            <t:template>
+									                <Input value="{rulename}" 
+									                	visible="{= ${type} !== 'RecordRule' &amp;&amp; ${type} !== 'EmptyRule' &amp;&amp; ${type} !== 'GenericRules' &amp;&amp; ${type} !== 'ArrayRule' &amp;&amp; ${type} !== 'UnionRule' }" 
+									                 />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Condition"/>
+									            <t:template>
+									                <controls:FocusInput value="{condition}" 
+									                	valueState="{= (${conditionerror} ? 'Error' : 'None') }"
+									                	valueStateText="{conditionerror}"
+									                	liveChange=".onConditionChange"
+									                	focusIn=".onConditionChange"
+									                	visible="{= ${type} === 'PrimitiveRule' }"
+									                />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="if test failed..."/>
+									            <t:template>
+													<Select forceSelection="false" selectedKey="{iffalse}" 
+															visible="{= ${type} === 'PrimitiveRule' }" 
+													>
+														<core:ListItem key="FAIL" text="=Fail" icon="sap-icon://message-warning"></core:ListItem>
+														<core:ListItem key="WARN" text="=Warn" icon="sap-icon://question-mark"></core:ListItem>
+														<core:ListItem key="PASS" text="=Pass" icon="sap-icon://message-success"></core:ListItem>
+													</Select>
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="..change value to..."/>
+									            <t:template>
+									                <controls:FocusInput value="{substitute}" 
+									                	valueState="{= (${substituteerror} ? 'Error' : 'None') }"
+									                	valueStateText="{substituteerror}"
+									                	tooltip="{substituteresult}"
+									                	liveChange=".onSubstituteChange"
+									                	focusIn=".onSubstituteChange"
+									                	visible="{= ${type} === 'PrimitiveRule' &amp;&amp; !!${fieldname} }"
+									                />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Sample result"/>
+									            <t:template>
+									                <Button text="{sampleresult}" icon="{path: 'sampleresult', formatter: '.resulttypeFormatter'}"
+									                	visible="{= (!!${sampleresult} &amp;&amp; (${type} === 'PrimitiveRule' || ${type}.startsWith('TestSet'))) }" />
+									            </t:template>
+									        </t:Column>
+									        <t:Column>
+									            <Label text="Sample output"/>
+									            <t:template>
+									                <Text text="{sampleoutput}" wrapping="false" renderWhitespace="false" />
+									            </t:template>
+									        </t:Column>
+									    </t:columns>
+							        </t:TreeTable>
+								</content>
+							</TabContainerItem>
+						</items>
+					</TabContainer>
+				</Panel>
+				<Title id="formulaeditorlabel" text="Rule Formula"/>
+				<ce:CodeEditor id="formulaeditor" type="text" editable="false" liveChange=".onEditorChange" >
+					<ce:layoutData>
+						<FlexItemData growFactor="1" />
+					</ce:layoutData>
+				</ce:CodeEditor>
+			</FlexBox>
+		</controls:mainContents>
+	</controls:RulesToolPage>
+</mvc:View>
+

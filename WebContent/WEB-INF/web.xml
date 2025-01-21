@@ -4,11 +4,6 @@
 	<display-name>RulesService</display-name>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
-		<welcome-file>index.htm</welcome-file>
-		<welcome-file>index.jsp</welcome-file>
-		<welcome-file>default.html</welcome-file>
-		<welcome-file>default.htm</welcome-file>
-		<welcome-file>default.jsp</welcome-file>
 	</welcome-file-list>
 	<servlet>
 		<servlet-name>jersey-servlet</servlet-name>
@@ -18,6 +13,7 @@
 			<param-value>io.rtdi.bigdata.rulesservice.JerseyApplicationSettings</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>jersey-servlet</servlet-name>
@@ -29,21 +25,22 @@
 			<url-pattern>/ui5/*</url-pattern>
 		</web-resource-collection>
 		<auth-constraint>
-			<role-name>connectorview</role-name>
+			<role-name>rulesview</role-name>
 		</auth-constraint>
 	</security-constraint>
 	<login-config>
+		<auth-method>BASIC</auth-method>
+	</login-config>
+	<!--  <login-config>
 		<auth-method>FORM</auth-method>
 		<form-login-config>
-			<form-login-page>/login</form-login-page>
-			<form-error-page>/error</form-error-page>
+			<form-login-page>/login.html</form-login-page>
+			<form-error-page>/login-failed.html</form-error-page>
 		</form-login-config>
-	</login-config>
+	</login-config>  -->
 	<security-role>
-		<role-name>connectorconfig</role-name>
-		<role-name>connectorview</role-name>
-		<role-name>connectorschema</role-name>
-		<role-name>connectoroperator</role-name>
+		<role-name>rulesview</role-name>
+		<role-name>rulesadmin</role-name>
 	</security-role>
 </web-app>
 

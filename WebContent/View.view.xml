@@ -1,0 +1,116 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.Controller"
+	xmlns:mvc="sap.ui.core.mvc" 
+	xmlns="sap.m" 
+	xmlns:core="sap.ui.core"
+	xmlns:l="sap.ui.layout"
+	>
+	<FlexBox height="100%" direction="Column" >
+		<Page>
+			<layoutData>
+				<FlexItemData growFactor="1"/>
+			</layoutData>
+			<customHeader>
+				<OverflowToolbar>
+					<Text text="Settings" />
+				</OverflowToolbar>
+			</customHeader>
+			<HBox>
+				<ObjectStatus
+							text="Kafka"
+							inverted="true"
+							icon="{= %{/config/kafkaconnected} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
+							state="{= %{/config/kafkaconnected} ? 'Success' : 'Error' }" />
+				<ObjectStatus
+							text="Registry"
+							inverted="true"
+							icon="{= %{/config/schemaregconnected} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
+							state="{= %{/config/schemaregconnected} ? 'Success' : 'Error' }" />
+				<ObjectStatus
+							text="Service"
+							inverted="true"
+							icon="{= %{/config/servicerunning} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
+							state="{= %{/config/servicerunning} ? 'Success' : 'Error' }" />
+			</HBox>
+			<HBox
+				wrap="Wrap"
+				width="100%"
+				height="100%">
+				<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+					<VBox class="sapUiSmallMargin">
+						<core:Icon src="sap-icon://wrench" class="sapUiTinyMarginBottom"/>
+						<Link text="Config" href="ui5/Config.html" target="_blank" class="sapUiTinyMarginTop" />
+						<Text text="Configure the connections" wrapping="true"/>
+					</VBox>
+				</VBox>
+	
+				<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+					<VBox class="sapUiSmallMargin">
+						<core:Icon src="sap-icon://document-text" class="sapUiTinyMarginBottom"/>
+						<Link text="Rules" href="ui5/Rules.html" target="_blank" class="sapUiTinyMarginTop" />
+						<Text text="List or create rules for a subject" wrapping="true"/>
+					</VBox>
+				</VBox>
+	
+				<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+					<VBox class="sapUiSmallMargin">
+						<core:Icon src="sap-icon://inventory" class="sapUiTinyMarginBottom"/>
+						<Link text="Topics" href="ui5/Topics.html" target="_blank" class="sapUiTinyMarginTop" />
+						<Text text="Rules to be applied to topic data" wrapping="true"/>
+					</VBox>
+				</VBox>
+	
+				<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+					<VBox class="sapUiSmallMargin">
+						<core:Icon src="sap-icon://download" class="sapUiTinyMarginBottom"/>
+						<Link text="Sample" href="ui5/Sample.html" target="_blank" class="sapUiTinyMarginTop" />
+						<Text text="Generate sample data" wrapping="true"/>
+					</VBox>
+				</VBox>
+			</HBox>
+		</Page>
+		<Page>
+			<layoutData>
+				<FlexItemData growFactor="3"/>
+			</layoutData>
+			<customHeader>
+				<OverflowToolbar>
+					<Text text="All topics with rules" />
+				</OverflowToolbar>
+			</customHeader>
+		
+			<HBox id="Rules"
+				wrap="Wrap"
+				items="{/topicstatus}"
+				width="100%"
+				height="100%">
+				<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+					<VBox class="sapUiSmallMargin">
+						<Text text="Topic: {topicname}" wrapping="true"/>
+						<ObjectNumber
+							number="{rulecount}"
+							unit="rule(s)"
+							emphasized="false"
+							state="None" />
+						<ObjectNumber
+							number="{avgtime}"
+							unit="ms avg"
+							emphasized="false"
+							state="None" />
+						<ObjectNumber
+							number="{rowsprocessed}"
+							unit="rows"
+							emphasized="false"
+							state="None" />
+						<ObjectStatus
+								class="sapUiSmallMarginBottom"
+								text="{= ${status} === true ? 'Active' : 'Inactive' }"
+								inverted="true"
+								icon="{= ${status} === true ? 'sap-icon://sys-enter-2' : 'sap-icon://alert' }"
+								state="{= ${status} === true ? 'Success' : 'Warning' }" />
+					</VBox>
+				</VBox>
+			</HBox>
+		</Page>
+	</FlexBox>
+</mvc:View>

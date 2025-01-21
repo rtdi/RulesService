@@ -1,0 +1,38 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.ui5.Config"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:ce="sap.ui.codeeditor" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.ui5.lib">
+	<controls:RulesToolPage sideExpanded="false">
+		<controls:header>
+			<tnt:ToolHeader>
+				<Text text="Rulesservice" />
+				<ToolbarSpacer/>
+				<Button text="Save" press="onSave" visible="{/admin}" />
+			</tnt:ToolHeader>
+		</controls:header>
+		<controls:mainContents>
+			<VBox>
+				<Text text="{/errormessage}" />
+				<HBox>
+					<ObjectStatus
+								text="Kafka"
+								inverted="true"
+								icon="{= %{/kafkaconnected} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
+								state="{= %{/kafkaconnected} ? 'Success' : 'Error' }" />
+					<ObjectStatus
+								text="Registry"
+								inverted="true"
+								icon="{= %{/schemaregconnected} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
+								state="{= %{/schemaregconnected} ? 'Success' : 'Error' }" />
+					<ObjectStatus
+								text="Service"
+								inverted="true"
+								icon="{= %{/servicerunning} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
+								state="{= %{/servicerunning} ? 'Success' : 'Error' }" />
+				</HBox>
+				<Title text="Properties file" visible="{/admin}" />
+				<ce:CodeEditor id="properties" value="{/properties}" height="300px" type="properties" visible="{/admin}" />
+			</VBox>
+		</controls:mainContents>
+	</controls:RulesToolPage>
+</mvc:View>
+

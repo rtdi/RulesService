@@ -1,17 +1,15 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.avro.Schema;
-import org.apache.commons.jexl3.JexlException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class TestSetFirstPass extends TestSet {
@@ -20,57 +18,52 @@ public class TestSetFirstPass extends TestSet {
 		super();
 	}
 
-	public TestSetFirstPass(String fieldname, String rulename) {
-		super(fieldname, rulename);
+	public TestSetFirstPass(String fieldname, String rulename, Schema schema) {
+		super(fieldname, rulename, schema);
 	}
 
-	public TestSetFirstPass(String fieldname, String rulename, PrimitiveRule rule) {
-		super(fieldname, rulename, rule);
+	public TestSetFirstPass(String fieldname, String rulename, PrimitiveRule rule, Schema schema) {
+		super(fieldname, rulename, rule, schema);
 	}
 
 	@Override
-	public RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) throws IOException {
+	public RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException {
+		setSampleValue(value, test);
 		RuleResult result = RuleResult.FAIL;
 		for ( Rule rule : getRules()) {
-			result = rule.apply(valuerecord, ruleresults);
-			if (result == RuleResult.PASS) {
-				return result;
+			if (!(rule instanceof EmptyRule)) {
+				result = rule.apply(value, container, test);
+				if (result == RuleResult.PASS) {
+					break;
+				}
 			}
+		}
+		if (test) {
+			setSampleresult(result);
 		}
 		return result;
-	}
-	
-	@Override
-	public RuleResult validateRule(JexlRecord valuerecord) throws JexlException {
-		/*
-		 * Needs to go through all rules instead of exit early, else the other rules are not evaluated and hence their result is not displayed. 
-		 */
-		RuleResult r = RuleResult.FAIL;
-		for ( Rule rule : getRules()) {
-			RuleResult intermediate = rule.validateRule(valuerecord);
-			if (intermediate == RuleResult.PASS) {
-				r = intermediate;
-			}
-		}
-		sampleresult = r;
-		return r;
 	}
 
 	@Override
 	public String toString() {
-		return "TestSetFirstPass \"" + getRulename() + "\" tests until first PASSes";
+		return getFieldname() + ": TestSetFirstPass tests until first PASS";
 	}
 
 	@Override
-	protected TestSetFirstPass createUIRuleTree(Schema fieldschema) throws PropertiesException {
-		TestSetFirstPass t = new TestSetFirstPass(getFieldname(), getRulename());
-		copyTests(t, fieldschema);
-		return t;
-	}
-
-	@Override
-	protected Rule createNewInstance() throws ConnectorCallerException {
-		return new TestSetFirstPass(getFieldname(), getRulename());
+	public Rule clone() {
+		TestSetFirstPass ret = new TestSetFirstPass();
+		ret.setDataType(getDataType());
+		ret.setFieldname(getFieldname());
+		ret.setRulename(getRulename());
+		ret.setSchemaname(getSchemaname());
+		if (getRules() != null) {
+			List<Rule> a = new ArrayList<>(getRules().size());
+			ret.setRules(a);
+			for (Rule r : getRules()) {
+				a.add(r.clone());
+			}
+		}
+		return ret;
 	}
 
 }

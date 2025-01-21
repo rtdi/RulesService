@@ -3,18 +3,18 @@
 
                             Preamble
 
-  The Commercial License is an addendum to the GPL license - see
+ The Commercial License is an addendum to the GPL license - see
 LICENSE in the same folder - superseding certain license
 related aspects.
 It applies to productive environments only, not Test, QA or 
-development systems. For those, the GPL license applies providing
+development systems. For those, the GPL license applies, providing
 a free usage license. 
 
-  The main purpose of the commercial license is to bill for the
+ The main purpose of the commercial license is to bill for the
 usage of the Program on a monthly basis, thus allowing further 
 development.
 The key metric used is the number of messages processed by the
-Program per month.
+program (sum of all instances) per month.
 
                            PAY-PER-USE
 
@@ -29,14 +29,19 @@ Programs are billed according to the following table
 
 Example 1: In a test environment the Program is evaluated for
 its performance over a long period of time.
---> The Program is used under the GPL license as it is executed in a
+--> The program is used under the GPL license as it is executed in a
 test environment, not a production system, hence no fees occur.
 
-Example 2: The Program is used to copy productive data, the amount
+Example 2: The program is used to copy productive data, the amount
 of rows copied is 50'000rows per month.
 --> The program is used under this Commercial License but the
 fee is 0EUR according to above table. No contract needs to be signed,
-no invoices will be created. 
+no invoices will be created.
+
+Example 3: The program is started 20 times to process different Kafka
+topics and partitions at speed, processing 5m records per month in
+total. --> The program is used under this Commercial License and
+100EUR/month are to be invoiced. 
 
 Once an order is placed for a defined volume, rtdi.io GmbH (Austria,
 Europe), as the copyright owner, will send invoices on a monthly basis
@@ -53,7 +58,7 @@ GDPR - General Data Protection and Privacy - information)
                  DIFFERENCES TO SOFTWARE LICENSES
 
 Unlike classic software licenses, where license and support contract
-go in tandem, the monthly usage is charged and the Program provided
+go in tandem, the monthly usage is charged and the program provided
 as-is. As consequence no support and no warranties are provided. In 
 this regards all clauses of the GPL apply, specifically but not 
 exclusive Section 15 and Section 16.

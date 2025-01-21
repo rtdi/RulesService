@@ -1,0 +1,45 @@
+/* Root element */
+.json-document {
+	padding: 1em 2em;
+}
+
+/* Syntax highlighting for JSON objects */
+ul.json-dict, ol.json-array {
+	list-style-type: none;
+	margin: 0 0 0 1px;
+	border-left: 1px dotted #ccc;
+	padding-left: 2em;
+}
+
+.json-string {
+	color: black;
+}
+
+.json-key {
+	color: blue;
+}
+
+.json-key-array {
+	color: blue;
+	cursor: row-resize;
+}
+
+.json-key-record {
+	color: blue;
+	cursor: row-resize;
+}
+
+.json-literal {
+	color: red;
+}
+
+/* Collapsable placeholder links */
+a.json-placeholder {
+	color: #aaa;
+	padding: 0 1em;
+	text-decoration: none;
+}
+
+a.json-placeholder:hover {
+	text-decoration: underline;
+}

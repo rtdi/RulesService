@@ -1,0 +1,28 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.ui5.Rules"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:l="sap.ui.layout" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.ui5.lib">
+	<controls:RulesToolPage sideExpanded="false">
+		<controls:header>
+			<tnt:ToolHeader>
+				<Text text="Rulesservice" />
+			</tnt:ToolHeader>
+		</controls:header>
+		<controls:mainContents>
+			<l:ResponsiveSplitter defaultPane="default">
+				<l:PaneContainer>
+					<l:SplitPane id="subjects">
+						<List headerText="Select a subject from the schema registry" items="{/}" >
+							<DisplayListItem label="{name}" type="Navigation" press=".onSubjectSelected" />
+						</List>
+					</l:SplitPane>
+					<l:SplitPane id="rules">
+						<List headerText="Select a Rule to edit" items="{rules>/}" noDataText="Rules are for an input subject, select one">
+							<DisplayListItem label="{rules>name}" type="Navigation" press=".onRuleSelected"/>
+						</List>
+					</l:SplitPane>
+				</l:PaneContainer>
+			</l:ResponsiveSplitter>
+		</controls:mainContents>
+	</controls:RulesToolPage>
+</mvc:View>
+

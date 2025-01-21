@@ -1,61 +1,57 @@
 package io.rtdi.bigdata.rulesservice.rules;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.avro.Schema;
 import org.apache.commons.jexl3.JexlException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.rtdi.bigdata.connector.connectorframework.exceptions.ConnectorCallerException;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.AvroUtils;
-import io.rtdi.bigdata.connector.pipeline.foundation.avro.JexlGenericData.JexlRecord;
-import io.rtdi.bigdata.kafka.avro.datatypes.*;
 import io.rtdi.bigdata.kafka.avro.RuleResult;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PipelineCallerException;
-import io.rtdi.bigdata.connector.pipeline.foundation.exceptions.PropertiesException;
-import io.rtdi.bigdata.connector.pipeline.foundation.mapping.PrimitiveMapping;
 import io.rtdi.bigdata.kafka.avro.recordbuilders.ValueSchema;
+import io.rtdi.bigdata.rulesservice.PropertiesException;
+import io.rtdi.bigdata.rulesservice.jexl.AvroContainer;
+import io.rtdi.bigdata.rulesservice.jexl.AvroRuleUtils;
+import io.rtdi.bigdata.rulesservice.jexl.JexlRecord;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class PrimitiveRule extends RuleWithName {
 	private PrimitiveMapping condition;
 	private RuleResult iffalse = RuleResult.FAIL;
 	private PrimitiveMapping substitute;
-	private Object value;
-	private RuleResult sampleresult;
-	private Object substituteresult;
 	private String conditionerror;
 	private String substituteerror;
 
-	public PrimitiveRule(String fieldname, String rulename, String condition, RuleResult iffalse, String substitute) throws IOException {
-		super(fieldname, (rulename == null ? "Rule" : rulename));
+	public PrimitiveRule(String fieldname, String rulename, String condition, RuleResult iffalse, String substitute, Schema schema) throws IOException {
+		super(fieldname, (rulename == null ? "Rule" : rulename), schema);
 		if (condition == null) {
-			throw new ConnectorCallerException("Condition formula cannot be null", null, null, fieldname);
+			throw new PropertiesException("Condition formula cannot be null", null, null, fieldname);
 		}
 		this.condition = new PrimitiveMapping(condition);
-		this.iffalse = (iffalse == null?RuleResult.FAIL:iffalse);
-		if (substitute != null) {
+		this.iffalse = (iffalse == null ? RuleResult.FAIL : iffalse);
+		if (substitute != null && substitute.length() > 0) {
 			this.substitute = new PrimitiveMapping(substitute);
 		}
 	}
-	
+
 	public PrimitiveRule() {
 		super();
 	}
 
 	@Override
-	public RuleResult apply(JexlRecord valuerecord, List<JexlRecord> ruleresults) throws IOException {
+	public RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException {
 		try {
-			RuleResult result = calculateResult(valuerecord);
+			setSampleValue(value, test);
+			RuleResult result = calculateResult(container, test);
 			if (result != null) {
-				JexlRecord r = AvroUtils.createAuditDetails();
+				JexlRecord r = AvroRuleUtils.createAuditDetails();
 				r.put(ValueSchema.AUDITTRANSFORMATIONNAME, getRulePath());
 				r.put(ValueSchema.TRANSFORMRESULT, result.name());
 				String v;
-				String p = valuerecord.getPath(); 
-				if (p == null) {
+				String p = container.getPath();
+				if (getFieldname() == null) {
+					v = p;
+				} else if (p == null) {
 					v = getFieldname();
 				} else {
 					v = p + "." + getFieldname();
@@ -73,54 +69,75 @@ public class PrimitiveRule extends RuleWithName {
 					break;
 				}
 				r.put(ValueSchema.AUDIT_TRANSFORMRESULT_QUALITY, q);
-				ruleresults.add(r);
-	
-				return result;
+				container.addRuleresult(r);
+
 			} else {
-				return RuleResult.PASS;				
+				result = RuleResult.PASS;
 			}
+			if (test) {
+				setSampleresult(result);
+				setConditionerror(null);
+			}
+			return result;
 		} catch (JexlException e) {
-			throw new ConnectorCallerException("Evaluationg the expression failed", e, "Check syntax and data", condition.toString());
-		}
-	}
-	
-	private RuleResult calculateResult(JexlRecord valuerecord) throws IOException {
-		RuleResult r = null;
-		Object o = condition.evaluate(valuerecord);
-		if (o != null && o instanceof Boolean) {
-			if (((Boolean) o).booleanValue()) {
-				r = RuleResult.PASS;
+			if (test) {
+				setConditionerror(e.getMessage());
+				return RuleResult.FAIL;
 			} else {
-				r = iffalse;
+				throw new PropertiesException("Evaluating the expression failed", e, "Check syntax and data", condition.toString());
 			}
-		} else {
-			throw new ConnectorCallerException("This rule expression does not return true/false", null, "A condition must return true/false", condition.getExpression());
 		}
-		return r;
 	}
-	
-	@Override
-	public RuleResult validateRule(JexlRecord valuerecord) {
-		sampleresult = null;
+
+	private RuleResult calculateResult(AvroContainer valuerecord, boolean test) throws IOException {
 		if (condition != null) {
-			try {
-				sampleresult = calculateResult(valuerecord);
-				conditionerror = null;
-			} catch (IOException e) {
-				sampleresult = null;
-				conditionerror = getResultString(condition.getExpression(), e);
+			RuleResult r = null;
+			Object o = condition.evaluate(valuerecord);
+			if (o != null && o instanceof Boolean) {
+				if (((Boolean) o).booleanValue()) {
+					r = RuleResult.PASS;
+				} else {
+					r = iffalse;
+					/*
+					 * Calculate the substitute value
+					 */
+					if (substitute != null) {
+						try {
+							Object substitutevalue = substitute.evaluate(valuerecord);
+							valuerecord.addChangedvalue(getFieldname(), substitutevalue);
+							if (test) {
+								setSampleoutput(Rule.valueToJavaObject(substitutevalue, getDataType()));
+								setSubstituteerror(null);
+							}
+						} catch (IOException e) {
+							if (test) {
+								setSampleoutput(null);
+								setSubstituteerror(getResultString(substitute.getExpression(), e));
+							} else {
+								throw e;
+							}
+						}
+					}
+				}
+			} else {
+				if (test) {
+					setConditionerror("This rule expression does not return true/false");
+				} else {
+					throw new PropertiesException("This rule expression does not return true/false", null, "A condition must return true/false", condition.getExpression());
+				}
 			}
+			return r;
+		} else {
+			return null;
 		}
-		if (substitute != null) {
-			try {
-				substituteresult = substitute.evaluate(valuerecord);
-				substituteerror = null;
-			} catch (IOException e) {
-				substituteresult = null;
-				substituteerror = getResultString(substitute.getExpression(), e);
-			}
-		}
-		return sampleresult;
+	}
+
+	public void setConditionerror(String conditionerror) {
+		this.conditionerror = conditionerror;
+	}
+
+	public void setSubstituteerror(String substituteerror) {
+		this.substituteerror = substituteerror;
 	}
 
 	public String getCondition() {
@@ -136,7 +153,7 @@ public class PrimitiveRule extends RuleWithName {
 			try {
 				this.condition = new PrimitiveMapping(condition);
 			} catch (IOException e) {
-				sampleresult = null;
+				setSampleresult(null);
 				conditionerror = getResultString(condition, e);
 			}
 		}
@@ -159,16 +176,16 @@ public class PrimitiveRule extends RuleWithName {
 	}
 
 	public void setSubstitute(String substitute) {
-		if (substitute != null) {
+		if (substitute != null && substitute.length() > 0) {
 			try {
 				this.substitute = new PrimitiveMapping(substitute);
 			} catch (IOException e) {
-				substituteresult = null;
+				setSampleoutput(null);
 				substituteerror = getResultString(substitute, e);
 			}
 		}
 	}
-	
+
 	protected String getResultString(String formula, IOException e) {
 		String m = e.getMessage();
 		if (e.getCause() != null) {
@@ -182,56 +199,10 @@ public class PrimitiveRule extends RuleWithName {
 	@Override
 	public String toString() {
 		if (condition != null) {
-			return "Rule: if (" + condition.toString() + ") then PASS else " + iffalse.name();
+			return getFieldname() + ": PrimitiveRule: if (" + condition.toString() + ") then PASS else " + iffalse.name();
 		} else {
-			return "Rule: always PASS ";
+			return getFieldname() + ": PrimitiveRule always PASS ";
 		}
-	}
-
-	@Override
-	protected PrimitiveRule createUIRuleTree(Schema fieldschema) throws PropertiesException {
-		return this;
-	}
-
-	@Override
-	public void assignSamplevalue(JexlRecord sampledata) {
-		this.value = sampledata.get(getFieldname());
-	}
-
-	@Override
-	public Object getSamplevalue() throws PipelineCallerException {
-		return valueToJavaObject(value, getDataType());
-	}
-	
-	static Object valueToJavaObject(Object value, IAvroDatatype datatype) throws PipelineCallerException {
-		if (value != null && datatype != null) {
-			return datatype.convertToJava(value);
-		} else {
-			return null;
-		}
-	}
-
-	@Override
-	public RuleResult getSampleresult() throws IOException {
-		return sampleresult;
-	}
-
-	@Override
-	protected Rule createSimplified() throws IOException {
-		if (getCondition() != null) {
-			return createNewInstance();
-		} else {
-			return null;
-		}
-	}
-
-	@Override
-	protected Rule createNewInstance() throws IOException {
-		return new PrimitiveRule(getFieldname(), getRulename(), getCondition(), getIffalse(), getSubstitute());
-	}
-
-	public Object getSubstituteresult() {
-		return substituteresult;
 	}
 
 	public String getSubstituteerror() {
@@ -240,6 +211,19 @@ public class PrimitiveRule extends RuleWithName {
 
 	public String getConditionerror() {
 		return conditionerror;
+	}
+
+	@Override
+	public Rule clone() {
+		PrimitiveRule ret = new PrimitiveRule();
+		ret.setCondition(getCondition());
+		ret.setDataType(getDataType());
+		ret.setFieldname(getFieldname());
+		ret.setIffalse(getIffalse());
+		ret.setRulename(getRulename());
+		ret.setSchemaname(getSchemaname());
+		ret.setSubstitute(getSubstitute());
+		return ret;
 	}
 
 }

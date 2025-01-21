@@ -1,0 +1,107 @@
+{
+    "rulesteps": [
+        {
+            "type": "RuleStep",
+            "fieldname": "next step",
+            "rules": [
+                {
+                    "type": "EmptyRule",
+                    "fieldname": "ordertime",
+                    "rules": null,
+                    "fielddatatype": null,
+                    "sampleresulterror": null,
+                    "sampleresult": null,
+                    "samplevalue": null
+                },
+                {
+                    "type": "EmptyRule",
+                    "fieldname": "orderid",
+                    "rules": null,
+                    "fielddatatype": null,
+                    "sampleresulterror": null,
+                    "sampleresult": null,
+                    "samplevalue": null
+                },
+                {
+                    "type": "EmptyRule",
+                    "fieldname": "itemid",
+                    "rules": null,
+                    "fielddatatype": null,
+                    "sampleresulterror": null,
+                    "sampleresult": null,
+                    "samplevalue": null
+                },
+                {
+                    "type": "EmptyRule",
+                    "fieldname": "orderunits",
+                    "rules": null,
+                    "fielddatatype": null,
+                    "sampleresulterror": null,
+                    "sampleresult": null,
+                    "samplevalue": null
+                },
+                {
+                    "type": "RecordRule",
+                    "fieldname": "address",
+                    "rules": [
+                        {
+                            "type": "EmptyRule",
+                            "fieldname": "city",
+                            "rules": null,
+                            "fielddatatype": null,
+                            "sampleresulterror": null,
+                            "sampleresult": null,
+                            "samplevalue": null
+                        },
+                        {
+                            "type": "EmptyRule",
+                            "fieldname": "state",
+                            "rules": null,
+                            "fielddatatype": null,
+                            "sampleresulterror": null,
+                            "sampleresult": null,
+                            "samplevalue": null
+                        },
+                        {
+                            "type": "EmptyRule",
+                            "fieldname": "zipcode",
+                            "rules": null,
+                            "fielddatatype": null,
+                            "sampleresulterror": null,
+                            "sampleresult": null,
+                            "samplevalue": null
+                        },
+                        {
+                            "type": "GenericRules",
+                            "fieldname": "(more)",
+                            "rules": null,
+                            "fielddatatype": null,
+                            "sampleresulterror": null,
+                            "rulename": null,
+                            "sampleresult": null,
+                            "samplevalue": null
+                        }
+                    ],
+                    "fielddatatype": null,
+                    "sampleresulterror": null,
+                    "sampleresult": null,
+                    "samplevalue": null
+                },
+                {
+                    "type": "GenericRules",
+                    "fieldname": "(more)",
+                    "rules": null,
+                    "fielddatatype": null,
+                    "sampleresulterror": null,
+                    "rulename": null,
+                    "sampleresult": null,
+                    "samplevalue": null
+                }
+            ],
+            "fielddatatype": null,
+            "sampleresulterror": null,
+            "sampleresult": null,
+            "samplevalue": null
+        }
+    ]
+}
