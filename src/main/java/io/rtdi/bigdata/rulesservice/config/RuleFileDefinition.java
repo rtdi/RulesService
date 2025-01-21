@@ -280,8 +280,8 @@ public class RuleFileDefinition {
 	public static void copyToActivate(Path rootdir, String subjectname, String path) throws IOException {
 		String inactivedir = getActivePath(false);
 		String activedir = getActivePath(true);
-		Path sourcepath = rootdir.resolve(subjectname, inactivedir, path);
-		Path targetdir = rootdir.resolve(subjectname, activedir);
+		Path sourcepath = rootdir.resolve(subjectname).resolve(inactivedir).resolve(path);
+		Path targetdir = rootdir.resolve(subjectname).resolve(activedir);
 		Path targetpath = targetdir.resolve(path);
 		targetpath.getParent().toFile().mkdirs(); // the filename can have directories too
 		Files.copy(sourcepath, targetpath, StandardCopyOption.REPLACE_EXISTING);
