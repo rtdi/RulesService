@@ -66,7 +66,7 @@ For proper start commands, especially https and security related, see the [Conne
 
 The first step is to connect the application to a Kafka server and the schema registry. In the settings screen the normal Kafka properties file data can be pasted and saved. By default the file location is `/apps/rulesservice/settings/kafka.properties` from the container's point of view.
 
-<img src="docs/media/Config.png" width="50%">
+<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/docs/media/Config.png" width="50%">
 
 
 ```
@@ -92,7 +92,7 @@ To simplify entering rules, sample values can be entered and the result be recal
 
 Once a rule file is complete, it must be copied from the `inactive` to the `active` directory. The button `Activate` does that. The reason for this two staged approach is to allow users saving intermediate definitions without impacting the currently running service.
 
-<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/Rule.png" width="50%">
+<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/main/docs/media/Rule.png" width="50%">
 
 
 ### Step 3: Topics
@@ -115,7 +115,7 @@ Querying this data allows detailed reporting which records were processed by wha
 
 The exact Avro schema field definition can be found [here](docs/audit-schema.md)
 
-<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/RuleResult.png" width="50%">
+<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/docs/media/RuleResult.png" width="50%">
 
 
 ### Sample files
@@ -126,7 +126,7 @@ The found messages are streamed in chunks into the screen and can be saved, eith
 The files are stored in the directory `/apps/rulesservice/definitions/<subjectname>/sampledata/`.
 If no file name is specified, the name will be `partition_<partition>_offset_<offset>.json`.
 
-<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/SampleData.png" width="50%">
+<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/docs/media/SampleData.png" width="50%">
 
 
 <a name="b4"/>
