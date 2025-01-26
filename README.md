@@ -6,6 +6,18 @@ Source code available here: [github](https://github.com/rtdi/RTDIRulesService)
 
 Docker image here: [dockerhub](https://hub.docker.com/r/rtdi/rulesservice)
 
+## Table of Contents
+
+[Design Thinking goal](#b1)  
+[Requirements](#b2)  
+[Installation and testing](#b3)  
+[Rules](#b4)  
+[Licensing](#b5)  
+[Data protection and privacy](#b6)  
+
+
+<a name="b1"/>
+
 ## Design Thinking goal
 
 * As a business user I would like to validate the incoming data and cleanse it in realtime
@@ -13,12 +25,15 @@ Docker image here: [dockerhub](https://hub.docker.com/r/rtdi/rulesservice)
 * Operational dashboards using the rule results provide information about the data quality
 * Different types of rules should be supported, validation rules, cleansing rules, data augmentation, standardization rules,...
 
+<a name="b2"/>
+
 ## Requirements
 
 * Payload (value) in Avro Format
 * Apache Kafka connection with the permissions to run as a KStream
 * Schema Registry connection to read (and write) schema definitions
 
+<a name="b3"/>
 
 ## Installation and testing
 
@@ -77,7 +92,7 @@ To simplify entering rules, sample values can be entered and the result be recal
 
 Once a rule file is complete, it must be copied from the `inactive` to the `active` directory. The button `Activate` does that. The reason for this two staged approach is to allow users saving intermediate definitions without impacting the currently running service.
 
-<img src="docs/media/Rule.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/Rule.png" width="50%">
 
 
 ### Step 3: Topics
@@ -87,7 +102,7 @@ Scaling is achieved by increasing the number of KStream instances used for this 
 
 The screen also allows to copy the rule files being used into the active folder to simplify activating each from the rule file dialog.
 
-<img src="docs/media/Topics.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/Topics.png" width="50%">
 
 ### Result
 
@@ -100,7 +115,7 @@ Querying this data allows detailed reporting which records were processed by wha
 
 The exact Avro schema field definition can be found [here](docs/audit-schema.md)
 
-<img src="docs/media/RuleResult.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/RuleResult.png" width="50%">
 
 
 ### Sample files
@@ -111,7 +126,10 @@ The found messages are streamed in chunks into the screen and can be saved, eith
 The files are stored in the directory `/apps/rulesservice/definitions/<subjectname>/sampledata/`.
 If no file name is specified, the name will be `partition_<partition>_offset_<offset>.json`.
 
-<img src="docs/media/SampleData.png" width="50%">
+<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/SampleData.png" width="50%">
+
+
+<a name="b4"/>
 
 ## Rules
 
@@ -182,11 +200,13 @@ For more examples [see](docs/rule-syntax.md)
 
  * Can a new output column be created via a formula? No, the output schema is always derived from the input schema, for two reasons. First, if adding fields would be possible, it might collide when the input subject is evolved to a new version. The other reason is performance. It would require to create a new output message from scratch, copying the majority of the data even if nothing has changed. That would be too expensive. So the only option is to add the column to the input schema first.
 
+<a name="b5"/>
 
 ## Licensing
 
-This application is provided as dual license. For all users with less than 100'000 messages processed per month, the application can be used free of charge and the code falls under a Gnu Public License. Users with more than 100'000 messages per month are asked to get a ![commercial license](LICENSE_COMMERCIAL) to support further development of this solution. The commercial license is on a monthly pay-per-use basis.
+This application is provided as dual license. For all users with less than 100'000 messages processed per month, the application can be used free of charge and the code falls under a Gnu Public License. Users with more than 100'000 messages per month are asked to get a [commercial license](LICENSE_COMMERCIAL) to support further development of this solution. The commercial license is on a monthly pay-per-use basis.
 
+<a name="b6"/>
 
 ## Data protection and privacy
 
