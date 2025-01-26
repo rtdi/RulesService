@@ -92,7 +92,7 @@ To simplify entering rules, sample values can be entered and the result be recal
 
 Once a rule file is complete, it must be copied from the `inactive` to the `active` directory. The button `Activate` does that. The reason for this two staged approach is to allow users saving intermediate definitions without impacting the currently running service.
 
-<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/main/docs/media/Rule.png" width="50%">
+<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/docs/media/Rule.png" width="50%">
 
 
 ### Step 3: Topics
@@ -102,7 +102,7 @@ Scaling is achieved by increasing the number of KStream instances used for this 
 
 The screen also allows to copy the rule files being used into the active folder to simplify activating each from the rule file dialog.
 
-<img src="https://github.com/rtdi/RulesService/blob/main/docs/media/Topics.png" width="50%">
+<img src="https://raw.githubusercontent.com/rtdi/RulesService/refs/heads/main/docs/media/Topics.png" width="50%">
 
 ### Result
 
