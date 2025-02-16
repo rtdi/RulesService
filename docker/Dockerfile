@@ -2,7 +2,7 @@ FROM rtdi/connectorrootapp
 
 LABEL maintainer="info@rtdi.io"
 
-ADD https://raw.githubusercontent.com/rtdi/RulesService/master/docker/global.properties conf/rtdiconfig/RulesService/
+ADD https://raw.githubusercontent.com/rtdi/RulesService/master/docker/tomcat-users-orig.xml conf/
 ADD https://github.com/rtdi/RulesService/releases/latest/download/rulesservice.war ./webapps/
 
 EXPOSE 8080

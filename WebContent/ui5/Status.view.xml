@@ -1,0 +1,60 @@
+<mvc:View height="100%" class="sapUiSizeCompact"
+	controllerName="io.rtdi.bigdata.rulesservice.ui5.Status"
+	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:t="sap.ui.table" xmlns:tnt="sap.tnt" xmlns:controls="io.rtdi.bigdata.rulesservice.ui5.lib">
+	<controls:RulesToolPage sideExpanded="false">
+		<controls:header>
+			<tnt:ToolHeader>
+				<Text text="Status" />
+				<ToolbarSpacer/>
+			</tnt:ToolHeader>
+		</controls:header>
+		<controls:mainContents>
+			<FlexBox direction="Column" fitContainer="true">
+				<Page>
+					<layoutData>
+						<FlexItemData growFactor="3"/>
+					</layoutData>
+					<customHeader>
+						<OverflowToolbar>
+							<Text text="All topics with rules" />
+						</OverflowToolbar>
+					</customHeader>
+				
+					<HBox id="Rules"
+						wrap="Wrap"
+						items="{/topicstatus}"
+						width="100%"
+						height="100%">
+						<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+							<VBox class="sapUiSmallMargin">
+								<Text text="Topic: {topicname}" wrapping="true"/>
+								<ObjectNumber
+									number="{rulecount}"
+									unit="rule(s)"
+									emphasized="false"
+									state="None" />
+								<ObjectNumber
+									number="{avgtime}"
+									unit="ms avg"
+									emphasized="false"
+									state="None" />
+								<ObjectNumber
+									number="{rowsprocessed}"
+									unit="rows"
+									emphasized="false"
+									state="None" />
+								<ObjectStatus
+										class="sapUiSmallMarginBottom"
+										text="{= ${status} === true ? 'Active' : 'Inactive' }"
+										inverted="true"
+										icon="{= ${status} === true ? 'sap-icon://sys-enter-2' : 'sap-icon://alert' }"
+										state="{= ${status} === true ? 'Success' : 'Warning' }" />
+							</VBox>
+						</VBox>
+					</HBox>
+				</Page>
+	        </FlexBox>
+	    </controls:mainContents>
+	 </controls:RulesToolPage>
+</mvc:View>
+

@@ -67,47 +67,12 @@
 						<Text text="Generate sample data" wrapping="true"/>
 					</VBox>
 				</VBox>
-			</HBox>
-		</Page>
-		<Page>
-			<layoutData>
-				<FlexItemData growFactor="3"/>
-			</layoutData>
-			<customHeader>
-				<OverflowToolbar>
-					<Text text="All topics with rules" />
-				</OverflowToolbar>
-			</customHeader>
-		
-			<HBox id="Rules"
-				wrap="Wrap"
-				items="{/topicstatus}"
-				width="100%"
-				height="100%">
+
 				<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
 					<VBox class="sapUiSmallMargin">
-						<Text text="Topic: {topicname}" wrapping="true"/>
-						<ObjectNumber
-							number="{rulecount}"
-							unit="rule(s)"
-							emphasized="false"
-							state="None" />
-						<ObjectNumber
-							number="{avgtime}"
-							unit="ms avg"
-							emphasized="false"
-							state="None" />
-						<ObjectNumber
-							number="{rowsprocessed}"
-							unit="rows"
-							emphasized="false"
-							state="None" />
-						<ObjectStatus
-								class="sapUiSmallMarginBottom"
-								text="{= ${status} === true ? 'Active' : 'Inactive' }"
-								inverted="true"
-								icon="{= ${status} === true ? 'sap-icon://sys-enter-2' : 'sap-icon://alert' }"
-								state="{= ${status} === true ? 'Success' : 'Warning' }" />
+						<core:Icon src="sap-icon://order-status" class="sapUiTinyMarginBottom"/>
+						<Link text="Sample" href="ui5/Status.html" target="_blank" class="sapUiTinyMarginTop" />
+						<Text text="Rule status" wrapping="true"/>
 					</VBox>
 				</VBox>
 			</HBox>
