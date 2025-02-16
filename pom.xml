@@ -8,7 +8,7 @@
 	<packaging>war</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<revision>0.9.30</revision>
+		<revision>0.9.31</revision>
 		<log4j.version>2.24.1</log4j.version>
 		<kafka.version>3.8.0</kafka.version>
 		<jersey>3.1.8</jersey>
