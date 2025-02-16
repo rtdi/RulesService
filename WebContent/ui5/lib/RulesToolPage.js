@@ -49,6 +49,12 @@ sap.ui.define([
 								icon: "sap-icon://wrench",
 								href: "./Config.html",
 								tooltip: "Configure the connections"
+							}),
+							new sap.tnt.NavigationListItem({
+								text: "Config",
+								icon: "sap-icon://order-status",
+								href: "./Status.html",
+								tooltip: "Status of all rules"
 							})
 						]}
 					)
