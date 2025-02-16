@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Parser;
@@ -69,7 +70,7 @@ public class RulesService implements ServletContextListener {
 	private CachedSchemaRegistryClient schemaclient;
 	private ServletContext context;
 	private Path settingsdir;
-	private Path rulegroupdir;
+	private Path rulefiledir;
 	private Exception globalexception;
 	private String properties;
 	private Map<String, String> propertiesmap;
@@ -162,26 +163,42 @@ public class RulesService implements ServletContextListener {
 		try {
 			Context initCtx = new InitialContext();
 			Context envCtx = (Context) initCtx.lookup("java:comp/env");
-			Object o = envCtx.lookup("rulesettings");
-			if (o != null) {
-				settingsdir = Path.of(o.toString());
-				log.info("Found JNDI resource name <java:comp/env/rulesettings>, hence the settings directory is <{}>", settingsdir);
-			} else {
-				settingsdir = Path.of("/apps/rulesservice/settings");
-				log.info("No JNDI resource found for name <java:comp/env/rulesettings>, hence the settings directory is the default <{}>", settingsdir);
+			try {
+				Object o = envCtx.lookup("rulesettings");
+				if (o != null) {
+					settingsdir = Path.of(o.toString());
+					log.info("Found JNDI resource name <java:comp/env/rulesettings>, hence the settings directory is <{}>", settingsdir);
+				}
+			} catch (NamingException e) {
+				log.info("No JNDI resource found in the context.xml for name <java:comp/env/rulesettings>, hence using the default");
 			}
-			o = envCtx.lookup("rulegroups");
-			if (o != null) {
-				rulegroupdir = Path.of(o.toString());
-				log.info("Found JNDI resource name <java:comp/env/rulegroups>, hence the rules root directory is <{}>", rulegroupdir);
-			} else {
-				rulegroupdir = Path.of("/apps/rulesservice/definitions");
-				log.info("No JNDI resource found for name <java:comp/env/rulegroups>, hence the rules root directory is the default <{}>", rulegroupdir);
+			try {
+				Object o = envCtx.lookup("rulegroups");
+				if (o != null) {
+					rulefiledir = Path.of(o.toString());
+					log.info("Found JNDI resource name <java:comp/env/rulegroups>, hence the rules root directory is <{}>", rulefiledir);
+				}
+			} catch (NamingException e) {
+				log.info("No JNDI resource found in the context.xml for name <java:comp/env/rulegroups>, hence the default");
+			}
+		} catch (Exception e) {
+			this.globalexception = e;
+			log.info("Exception when reading the webserver settings", e);
+		}
+		try {
+			if (settingsdir == null) {
+				settingsdir = Path.of("/apps/rulesservice/settings");
+				log.info("Settings directory is the default <{}>", settingsdir);
+			}
+			if (rulefiledir == null) {
+				rulefiledir = Path.of("/apps/rulesservice/definitions");
+				log.info("Rulefile directory is the default <{}>", rulefiledir);
 			}
 			configure();
 			startService();
 		} catch (Exception e) {
 			this.globalexception = e;
+			log.info("Exception when reading the webserver settings", e);
 		}
 	}
 
@@ -321,12 +338,12 @@ public class RulesService implements ServletContextListener {
 	}
 
 	public List<RuleFileName> getRuleFiles(String schemaname) {
-		List<RuleFileName> groups = RuleFileDefinition.getAllRuleFiles(rulegroupdir, schemaname);
+		List<RuleFileName> groups = RuleFileDefinition.getAllRuleFiles(rulefiledir, schemaname);
 		return groups;
 	}
 
 	public List<RuleFileName> getAllRuleFiles() {
-		List<RuleFileName> groups = RuleFileDefinition.getAllRuleFiles(rulegroupdir);
+		List<RuleFileName> groups = RuleFileDefinition.getAllRuleFiles(rulefiledir);
 		return groups;
 	}
 
@@ -349,7 +366,7 @@ public class RulesService implements ServletContextListener {
 	}
 
 	public Path getRuleFileRootDir() {
-		return this.rulegroupdir;
+		return this.rulefiledir;
 	}
 
 	public ServiceSettings getConfig(boolean isadmin) {
@@ -420,7 +437,7 @@ public class RulesService implements ServletContextListener {
 	 */
 	public Map<String, TopicRule> getTopicRuleFiles() throws IOException {
 		ObjectMapper om = new ObjectMapper();
-		Path topicrules = rulegroupdir.resolve("topics");
+		Path topicrules = rulefiledir.resolve("topics");
 		File topicruledir = topicrules.toFile();
 		Map<String, TopicRule> fileset = new HashMap<>();
 		if (topicruledir.isDirectory()) {
@@ -437,7 +454,7 @@ public class RulesService implements ServletContextListener {
 
 
 	public List<TopicRule> saveTopicRules(List<TopicRule> input) {
-		Path topicruledir = rulegroupdir.resolve("topics");
+		Path topicruledir = rulefiledir.resolve("topics");
 		File f = topicruledir.toFile();
 		if (!f.exists()) {
 			f.mkdirs();
