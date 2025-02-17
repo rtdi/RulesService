@@ -494,6 +494,9 @@ public class RulesService implements ServletContextListener {
 
 	public void saveConfig(ServiceSettings input) throws IOException {
 		String properties = input.getProperties();
+		if (!settingsdir.toFile().exists()) {
+			settingsdir.toFile().mkdirs();
+		}
 		Files.writeString(settingsdir.resolve("kafka.properties"), properties, StandardCharsets.UTF_8);
 		close();
 		try {

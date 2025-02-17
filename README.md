@@ -50,7 +50,7 @@ For example [http://localhost:80/](http://localhost:80/) might do the trick if t
 
 The default login for this startup method is: **rtdi / rtdi!io**
 
-The better start command is to mount two host directories into the container, the rtdiconfig directory where all settings made when configuring the connector will be stored permanently and the security directory for web server specific settings like user database and SSL certificates.
+The better start command is to mount two host directories into the container, the `/home/dir/rulesservice` (choose yours) directory where all settings related to the rules service are stored (with the sub directories `settings` for the Kafka connection details and `definitions` with the rule files) and the `/home/dir/security` directory for web server specific settings like user database and SSL certificates.
 
     docker run -d -p 80:8080 -p 443:8443 --rm \
        -v /home/dir/rulesservice:/apps/rulesservice \
@@ -59,7 +59,14 @@ The better start command is to mount two host directories into the container, th
 
 
 
-For proper start commands, especially https and security related, see the [ConnectorRootApp](https://github.com/rtdi/ConnectorRootApp) project, this application is based on.
+For more details, especially https and security related, see the [ConnectorRootApp](https://github.com/rtdi/ConnectorRootApp) project, this application is based on.
+
+if the `settings` or `definitions` directories should point to somewhere else, the `context.xml` of the tomcat webserver can get additional environments in the `<Context>` root node:
+
+```
+    <Environment name="rulesettings" value="c:/apps/rulesservice/settings" type="java.lang.String" override="false"/>
+    <Environment name="rulegroups" value="c:/apps/rulesservice/definitions" type="java.lang.String" override="false"/>
+```
 
 
 ### Step 1: Connect to Kafka

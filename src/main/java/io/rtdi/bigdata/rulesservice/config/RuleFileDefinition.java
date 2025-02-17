@@ -228,11 +228,15 @@ public class RuleFileDefinition {
 	}
 
 	public static List<RuleFileName> getAllRuleFiles(Path rootdir) {
-		File[] subjectnamedirs = rootdir.toFile().listFiles();
 		List<RuleFileName> ret = new ArrayList<>();
-		for (File f : subjectnamedirs) {
-			if (f.isDirectory()) {
-				ret.addAll(getAllRuleFiles(rootdir, f.getName()));
+		if (rootdir.toFile().exists()) {
+			File[] subjectnamedirs = rootdir.toFile().listFiles();
+			if (subjectnamedirs != null && subjectnamedirs.length > 0) {
+				for (File f : subjectnamedirs) {
+					if (f.isDirectory()) {
+						ret.addAll(getAllRuleFiles(rootdir, f.getName()));
+					}
+				}
 			}
 		}
 		return ret;
