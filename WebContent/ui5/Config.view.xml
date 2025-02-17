@@ -23,11 +23,6 @@
 								inverted="true"
 								icon="{= %{/schemaregconnected} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
 								state="{= %{/schemaregconnected} ? 'Success' : 'Error' }" />
-					<ObjectStatus
-								text="Service"
-								inverted="true"
-								icon="{= %{/servicerunning} ? 'sap-icon://sys-enter-2' : 'sap-icon://error' }"
-								state="{= %{/servicerunning} ? 'Success' : 'Error' }" />
 				</HBox>
 				<Title text="Properties file" visible="{/admin}" />
 				<ce:CodeEditor id="properties" value="{/properties}" height="300px" type="properties" visible="{/admin}" />

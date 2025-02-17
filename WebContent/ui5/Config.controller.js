@@ -25,6 +25,7 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Config", {
 			"Content-Type": "application/json;charset=utf-8"
 		}
 		post.loadData("../rest/config", json, true, "POST", false, true, headers);
+		model.loadData("../rest/config");
 	},
 });
 });
