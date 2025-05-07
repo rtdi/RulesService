@@ -19,8 +19,6 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.BytesDeserializer;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.server.ChunkedOutput;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,8 +52,6 @@ import jakarta.ws.rs.core.Response.Status;
 @Path("/")
 public class RestServiceSample {
 	protected static final int SAMPLE_MAX_ROWS = 100;
-
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	@Context
 	private Configuration configuration;
@@ -98,7 +94,7 @@ public class RestServiceSample {
 	public Response sample(@RequestBody List<String> topics) {
 		ObjectMapper om = new ObjectMapper();
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			ChunkedOutput<String> output = new ChunkedOutput<String>(String.class);
 			if (topics == null || topics.size() == 0) {
 				return ErrorResponse.createErrorResponse(new IOException("No topics to read from have been provided"), Status.BAD_REQUEST);
@@ -165,9 +161,9 @@ public class RestServiceSample {
 										}
 									}
 								}
-								LoggingUtil.logRequestEnd(log, request);
+								LoggingUtil.logRequestEnd(request);
 							} catch (IOException | RestClientException e) {
-								LoggingUtil.logRequestEndInputError(log, request, e);
+								LoggingUtil.logRequestEndInputError(request, e);
 								ErrorResponse response = new ErrorResponse(e);
 								try {
 									output.write(om.writeValueAsString(response));
@@ -185,7 +181,7 @@ public class RestServiceSample {
 				return Response.ok(output).build();
 			}
 		} catch (Exception e) {
-			LoggingUtil.logRequestEndInputError(log, request, e);
+			LoggingUtil.logRequestEndInputError(request, e);
 			return ErrorResponse.createErrorResponse(e);
 		}
 	}
@@ -227,12 +223,12 @@ public class RestServiceSample {
 			String subject,
 			@RequestBody SampleData data) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			String filename = data.save(service.getRuleFileRootDir());
-			return LoggingUtil.requestEnd(log, request, new SampleFileName(filename));
+			return LoggingUtil.requestEnd(request, new SampleFileName(filename));
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -272,12 +268,12 @@ public class RestServiceSample {
 			String subject
 			) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			List<SampleFileName> samplefiles = SampleData.getFiles(service.getRuleFileRootDir(), subject);
-			return LoggingUtil.requestEnd(log, request, samplefiles);
+			return LoggingUtil.requestEnd(request, samplefiles);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 

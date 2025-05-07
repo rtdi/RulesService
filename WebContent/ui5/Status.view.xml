@@ -6,6 +6,7 @@
 			<tnt:ToolHeader>
 				<Text text="Status" />
 				<ToolbarSpacer/>
+				<Button icon="sap-icon://refresh" press="onRefresh" />
 			</tnt:ToolHeader>
 		</controls:header>
 		<controls:mainContents>
@@ -25,7 +26,7 @@
 						items="{/topicstatus}"
 						width="100%"
 						height="100%">
-						<VBox justifyContent="SpaceBetween" width="200px" height="150px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
+						<VBox justifyContent="SpaceBetween" width="200px" height="200px" backgroundDesign="Solid" class="sapUiSmallMargin" tooltip="{tooltip}" >
 							<VBox class="sapUiSmallMargin">
 								<Text text="Topic: {topicname}" wrapping="true"/>
 								<ObjectNumber
@@ -43,12 +44,27 @@
 									unit="rows"
 									emphasized="false"
 									state="None" />
+								<ObjectNumber
+									number="{queuedrecords}"
+									unit="rows waiting"
+									emphasized="false"
+									state="None" />
+								<ObjectNumber
+									number="{rowspersecond}"
+									unit="rows/sec processed"
+									emphasized="false"
+									visible="{= ${rowspersecond} > 0 }"
+									state="None" />
 								<ObjectStatus
 										class="sapUiSmallMarginBottom"
 										text="{= ${status} === true ? 'Active' : 'Inactive' }"
 										inverted="true"
 										icon="{= ${status} === true ? 'sap-icon://sys-enter-2' : 'sap-icon://alert' }"
 										state="{= ${status} === true ? 'Success' : 'Warning' }" />
+								<Button
+                                    icon="{= ${status} === true ? 'sap-icon://stop' : 'sap-icon://restart' }"
+                                    press=".onStartStop"
+                                    type="Emphasized" />
 							</VBox>
 						</VBox>
 					</HBox>

@@ -2,9 +2,6 @@ package io.rtdi.bigdata.rulesservice.rest;
 
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.rtdi.bigdata.rulesservice.LoggingUtil;
 import io.rtdi.bigdata.rulesservice.RulesService;
 import io.rtdi.bigdata.rulesservice.config.RuleFileDefinition;
@@ -34,8 +31,6 @@ import jakarta.ws.rs.core.Response;
 @Path("/")
 public class RestServiceRules {
 	protected static final int SAMPLE_MAX_ROWS = 100;
-
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	@Context
 	private Configuration configuration;
@@ -82,12 +77,12 @@ public class RestServiceRules {
 					)
 			String subjectname) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			List<RuleFileName> rulegroups = service.getRuleFiles(subjectname);
-			return LoggingUtil.requestEnd(log, request, rulegroups);
+			return LoggingUtil.requestEnd(request, rulegroups);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -120,12 +115,12 @@ public class RestServiceRules {
 			})
 	public Response getAllRuleFiles() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			List<RuleFileName> rulegroups = service.getAllRuleFiles();
-			return LoggingUtil.requestEnd(log, request, rulegroups);
+			return LoggingUtil.requestEnd(request, rulegroups);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -170,13 +165,13 @@ public class RestServiceRules {
 					)
 			String subjectname) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			java.nio.file.Path name = java.nio.file.Path.of(path);
 			RuleFileDefinition rg = RuleFileDefinition.load(service.getRuleFileRootDir(), subjectname, name, false);
-			return LoggingUtil.requestEnd(log, request, rg);
+			return LoggingUtil.requestEnd(request, rg);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -223,15 +218,15 @@ public class RestServiceRules {
 			String subjectname,
 			@RequestBody RuleFileDefinition input) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			java.nio.file.Path name = java.nio.file.Path.of(path); // The name of the file to be saved, which is the old name
 			input.setActive(false);
 			input.setInputsubjectname(subjectname);
 			input.save(service.getRuleFileRootDir(), name);
-			return LoggingUtil.requestEnd(log, request, SuccessResponse.SUCCESS);
+			return LoggingUtil.requestEnd(request, SuccessResponse.SUCCESS);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -277,12 +272,12 @@ public class RestServiceRules {
 					)
 			String subjectname) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			RuleFileDefinition.copyToActivate(service.getRuleFileRootDir(), subjectname, path);
-			return LoggingUtil.requestEnd(log, request, SuccessResponse.SUCCESS);
+			return LoggingUtil.requestEnd(request, SuccessResponse.SUCCESS);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -321,12 +316,12 @@ public class RestServiceRules {
 					)
 			String subjectname) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			RuleFileDefinition rg = RuleFileDefinition.createEmptyRuleFileDefinition(subjectname, service);
-			return LoggingUtil.requestEnd(log, request, rg);
+			return LoggingUtil.requestEnd(request, rg);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 

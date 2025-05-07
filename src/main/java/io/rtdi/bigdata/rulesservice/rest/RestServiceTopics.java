@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.rtdi.bigdata.rulesservice.LoggingUtil;
 import io.rtdi.bigdata.rulesservice.RulesService;
 import io.rtdi.bigdata.rulesservice.config.TopicName;
 import io.rtdi.bigdata.rulesservice.config.TopicRule;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +22,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Configuration;
 import jakarta.ws.rs.core.Context;
@@ -33,8 +32,6 @@ import jakarta.ws.rs.core.Response;
 @Path("/")
 public class RestServiceTopics {
 	protected static final int SAMPLE_MAX_ROWS = 100;
-
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	@Context
 	private Configuration configuration;
@@ -75,12 +72,12 @@ public class RestServiceTopics {
 			})
 	public Response getTopicRules() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			Collection<TopicRule> topicrules = service.getTopicsAndRules();
-			return LoggingUtil.requestEnd(log, request, topicrules);
+			return LoggingUtil.requestEnd(request, topicrules);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -114,12 +111,12 @@ public class RestServiceTopics {
 			})
 	public Response postRules(@RequestBody List<TopicRule> input) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			List<TopicRule> ret = service.saveTopicRules(input);
-			return LoggingUtil.requestEnd(log, request, ret);
+			return LoggingUtil.requestEnd(request, ret);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -152,17 +149,180 @@ public class RestServiceTopics {
 			})
 	public Response getTopics() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			Collection<String> topics = service.getTopics();
 			List<TopicName> topicnames = new ArrayList<>(topics.size());
 			for (String t : topics) {
 				topicnames.add(new TopicName(t));
 			}
-			return LoggingUtil.requestEnd(log, request, topicnames);
+			return LoggingUtil.requestEnd(request, topicnames);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
+	@POST
+	@Path("/topics/start")
+	@Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed(ServletSecurityConstants.ROLE_EDIT)
+	@Operation(
+			summary = "Start all services",
+			description = "All services are (re)started",
+			responses = {
+					@ApiResponse(
+							responseCode = "200",
+							description = "Success message",
+							content = {
+									@Content(
+											schema = @Schema(implementation = SuccessResponse.class)
+											)
+							}
+							),
+					@ApiResponse(
+							responseCode = "500",
+							description = "Any exception thrown",
+							content = {
+									@Content(
+											schema = @Schema(implementation = ErrorResponse.class)
+											)
+							}
+							)
+			})
+	public Response startServices() {
+		try {
+			LoggingUtil.logRequestBegin(request);
+			RulesService service = RulesService.getRulesService(servletContext);
+			service.startService();
+			return LoggingUtil.requestEnd(request, SuccessResponse.SUCCESS);
+		} catch (Exception e) {
+			return LoggingUtil.requestEndTechnicalError(request, e);
+		}
+	}
+
+	@POST
+	@Path("/topics/stop")
+	@Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed(ServletSecurityConstants.ROLE_EDIT)
+	@Operation(
+			summary = "Stop all services",
+			description = "All running services are stopped",
+			responses = {
+					@ApiResponse(
+							responseCode = "200",
+							description = "Success message",
+							content = {
+									@Content(
+											schema = @Schema(implementation = SuccessResponse.class)
+											)
+							}
+							),
+					@ApiResponse(
+							responseCode = "500",
+							description = "Any exception thrown",
+							content = {
+									@Content(
+											schema = @Schema(implementation = ErrorResponse.class)
+											)
+							}
+							)
+			})
+	public Response stopServices() {
+		try {
+			LoggingUtil.logRequestBegin(request);
+			RulesService service = RulesService.getRulesService(servletContext);
+			service.stopService();
+			return LoggingUtil.requestEnd(request, SuccessResponse.SUCCESS);
+		} catch (Exception e) {
+			return LoggingUtil.requestEndTechnicalError(request, e);
+		}
+	}
+
+	@POST
+	@Path("/topics/start/{inputtopic}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed(ServletSecurityConstants.ROLE_EDIT)
+	@Operation(
+			summary = "Start a named service",
+			description = "(re)start a service for a specific topic",
+			responses = {
+					@ApiResponse(
+							responseCode = "200",
+							description = "Success message",
+							content = {
+									@Content(
+											schema = @Schema(implementation = SuccessResponse.class)
+											)
+							}
+							),
+					@ApiResponse(
+							responseCode = "500",
+							description = "Any exception thrown",
+							content = {
+									@Content(
+											schema = @Schema(implementation = ErrorResponse.class)
+											)
+							}
+							)
+			})
+	public Response startService(
+			@PathParam("inputtopic")
+			@Parameter(
+					description = "name of input topic",
+					example = "order_data"
+					)
+			String inputtopic) {
+		try {
+			LoggingUtil.logRequestBegin(request);
+			RulesService service = RulesService.getRulesService(servletContext);
+			service.startService(inputtopic);
+			return LoggingUtil.requestEnd(request, SuccessResponse.SUCCESS);
+		} catch (Exception e) {
+			return LoggingUtil.requestEndTechnicalError(request, e);
+		}
+	}
+
+	@POST
+	@Path("/topics/stop/{inputtopic}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed(ServletSecurityConstants.ROLE_EDIT)
+	@Operation(
+			summary = "Stop a named service",
+			description = "Stop a service for a specific topic",
+			responses = {
+					@ApiResponse(
+							responseCode = "200",
+							description = "Success message",
+							content = {
+									@Content(
+											schema = @Schema(implementation = SuccessResponse.class)
+											)
+							}
+							),
+					@ApiResponse(
+							responseCode = "500",
+							description = "Any exception thrown",
+							content = {
+									@Content(
+											schema = @Schema(implementation = ErrorResponse.class)
+											)
+							}
+							)
+			})
+	public Response stopService(
+			@PathParam("inputtopic")
+			@Parameter(
+					description = "name of input topic",
+					example = "order_data"
+					)
+			String inputtopic) {
+		try {
+			LoggingUtil.logRequestBegin(request);
+			RulesService service = RulesService.getRulesService(servletContext);
+			service.stopService(inputtopic);
+			return LoggingUtil.requestEnd(request, SuccessResponse.SUCCESS);
+		} catch (Exception e) {
+			return LoggingUtil.requestEndTechnicalError(request, e);
+		}
+	}
 }

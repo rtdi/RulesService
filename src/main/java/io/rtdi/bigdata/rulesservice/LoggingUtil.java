@@ -1,5 +1,6 @@
 package io.rtdi.bigdata.rulesservice;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.rtdi.bigdata.rulesservice.rest.ErrorResponse;
@@ -8,54 +9,55 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 public class LoggingUtil {
+	public static final Logger LOGGER = LogManager.getLogger("io.rtdi.bigdata.rulesservice");
 
-	public static void logRequestBegin(Logger log, HttpServletRequest request) {
-		log.info("Execution started: <{}> called by <{}>",
+	public static void logRequestBegin(HttpServletRequest request) {
+		LOGGER.info("Execution started: <{}> called by <{}>",
 				request != null ? request.getRequestURI() : "?",
 						request != null && request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "unknown");
 	}
 
-	public static void logRequestEnd(Logger log, HttpServletRequest request) {
-		log.info("Execution completed: <{}> called by <{}>",
+	public static void logRequestEnd(HttpServletRequest request) {
+		LOGGER.info("Execution completed: <{}> called by <{}>",
 				request != null ? request.getRequestURI() : "?",
 						request != null && request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "unknown");
 	}
 
-	public static Response requestEnd(Logger log, HttpServletRequest request, Object payload) {
+	public static Response requestEnd(HttpServletRequest request, Object payload) {
 		Response response = Response.ok(payload).build();
-		logRequestEnd(log, request);
+		logRequestEnd(request);
 		return response;
 	}
 
-	public static Response requestEndTechnicalError(Logger log, HttpServletRequest request, Exception e) {
+	public static Response requestEndTechnicalError(HttpServletRequest request, Exception e) {
 		Response response = ErrorResponse.createErrorResponse(e);
-		log.error("Exception", e);
-		logRequestEnd(log, request);
+		LOGGER.error("Exception", e);
+		logRequestEnd(request);
 		return response;
 	}
 
-	public static Response requestEndInputError(Logger log, HttpServletRequest request, Exception e) {
+	public static Response requestEndInputError(HttpServletRequest request, Exception e) {
 		Response response = ErrorResponse.createErrorResponse(e, Status.BAD_REQUEST);
-		log.warn("Exception", e);
-		logRequestEnd(log, request);
+		LOGGER.warn("Exception", e);
+		logRequestEnd(request);
 		return response;
 	}
 
-	public static Response requestEndInputError(Logger log, HttpServletRequest request, Exception e, Status status) {
+	public static Response requestEndInputError(HttpServletRequest request, Exception e, Status status) {
 		Response response = ErrorResponse.createErrorResponse(e, status);
-		log.warn("Exception", e);
-		logRequestEnd(log, request);
+		LOGGER.warn("Exception", e);
+		logRequestEnd(request);
 		return response;
 	}
 
-	public static void logRequestEndTechnicalError(Logger log, HttpServletRequest request, Exception e) {
-		log.error("Exception", e);
-		logRequestEnd(log, request);
+	public static void logRequestEndTechnicalError(HttpServletRequest request, Exception e) {
+		LOGGER.error("Exception", e);
+		logRequestEnd(request);
 	}
 
-	public static void logRequestEndInputError(Logger log, HttpServletRequest request, Exception e) {
-		log.warn("Exception", e);
-		logRequestEnd(log, request);
+	public static void logRequestEndInputError(HttpServletRequest request, Exception e) {
+		LOGGER.warn("Exception", e);
+		logRequestEnd(request);
 	}
 
 }

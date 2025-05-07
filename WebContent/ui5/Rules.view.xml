@@ -5,6 +5,8 @@
 		<controls:header>
 			<tnt:ToolHeader>
 				<Text text="Rulesservice" />
+				<ToolbarSpacer/>
+				<Button icon="sap-icon://refresh" press="onRefresh" />
 			</tnt:ToolHeader>
 		</controls:header>
 		<controls:mainContents>

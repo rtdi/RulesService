@@ -2,11 +2,11 @@ This is the `__audit` field definition within the Avro schema.
 
 ```
     {
+      "name": "__audit",
       "__internal": true,
       "__originalname": "__audit",
       "default": null,
       "doc": "If data is transformed this information is recorded here",
-      "name": "__audit",
       "type": [
         "null",
         {

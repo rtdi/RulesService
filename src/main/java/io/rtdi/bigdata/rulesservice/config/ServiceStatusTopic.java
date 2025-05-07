@@ -3,7 +3,7 @@ package io.rtdi.bigdata.rulesservice.config;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.rtdi.bigdata.rulesservice.RuleFileKStream;
+import io.rtdi.bigdata.rulesservice.RuleFileTransformer;
 
 public class ServiceStatusTopic {
 	private Boolean status;
@@ -14,15 +14,23 @@ public class ServiceStatusTopic {
 	private String topicname;
 	private String name;
 	private Integer rulecount = 0;
+	private Integer queuedrecords = 0;
+	private Float rowspersecond = null;
+	private int numbercores = 0;
+	private int queuecapacity;
 
-	public ServiceStatusTopic(RuleFileKStream stream) {
+	public ServiceStatusTopic(RuleFileTransformer stream) {
 		topicname = stream.getInputtopicname();
 		name = stream.getName();
 		if (stream.isAlive()) {
 			status = Boolean.TRUE;
 			rowsprocessed = stream.getRowsprocessed();
 			lastprocessedtimestamp = stream.getLastprocessedtimestamp();
+			queuedrecords = stream.getQueuedRecordCount();
+			rowspersecond = stream.getRowspersecond();
 			avgtime = stream.getAvgProcessingtime();
+			numbercores = stream.getNumbercores();
+			queuecapacity = stream.getQueuecapacity();
 			activerules = new ArrayList<>();
 			for (RuleFileDefinition r : stream.getRulefiledefinitions().values()) {
 				activerules.add(r.getName());
@@ -31,6 +39,11 @@ public class ServiceStatusTopic {
 		} else {
 			status = Boolean.FALSE;
 		}
+	}
+
+	public ServiceStatusTopic(String topicname) {
+		status = Boolean.FALSE;
+		this.topicname = topicname;
 	}
 
 	public Boolean getStatus() {
@@ -63,5 +76,21 @@ public class ServiceStatusTopic {
 
 	public Integer getRulecount() {
 		return rulecount;
+	}
+
+	public Integer getQueuedrecords() {
+		return queuedrecords;
+	}
+
+	public Float getRowspersecond() {
+		return rowspersecond;
+	}
+
+	public int getQueuecapacity() {
+		return queuecapacity;
+	}
+
+	public int getNumbercores() {
+		return numbercores;
 	}
 }

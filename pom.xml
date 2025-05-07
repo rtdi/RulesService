@@ -49,12 +49,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka-streams-test-utils</artifactId>
-			<version>${kafka.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
 			<artifactId>jersey-container-servlet</artifactId>
 			<version>${jersey}</version>
@@ -106,11 +100,6 @@
 			<version>${kafka.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka-streams</artifactId>
-			<version>${kafka.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>io.confluent</groupId>
 			<artifactId>kafka-schema-registry-client</artifactId>
 			<version>7.7.1</version>
@@ -131,9 +120,9 @@
 			<version>3.1.8</version>
 		</dependency>
 		<dependency>
-			<groupId>io.rtdi.bigdata.kafka</groupId>
-			<artifactId>kafkaavro</artifactId>
-			<version>0.10.15</version>
+		  <groupId>io.rtdi.bigdata.kafka</groupId>
+		  <artifactId>kafkaavro</artifactId>
+		  <version>0.10.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>

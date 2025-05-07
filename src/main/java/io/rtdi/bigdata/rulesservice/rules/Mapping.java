@@ -56,7 +56,7 @@ public abstract class Mapping {
 			return expression.execute(context);
 		} catch (JexlException e) {
 			StringBuilder msg = createErrorDetails(e);
-			throw new PropertiesException("Cannot evaluate the Expression" + msg.toString(), e, "Validate the syntax", expression.getSourceText());
+			throw new PropertiesException("Cannot evaluate the Expression " + msg.toString(), e, "Validate the syntax", expression.getSourceText());
 		}
 	}
 

@@ -6,6 +6,7 @@
 			<tnt:ToolHeader>
 				<Text text="Topic rules" />
 				<ToolbarSpacer/>
+				<Button icon="sap-icon://refresh" press="onRefresh" />
                 <Button text="Save" press="onSave" tooltip="Store the settings for each input topic as file"/>
 			</tnt:ToolHeader>
 		</controls:header>

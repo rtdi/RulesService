@@ -1,8 +1,5 @@
 package io.rtdi.bigdata.rulesservice.rest;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.rtdi.bigdata.rulesservice.LoggingUtil;
 import io.rtdi.bigdata.rulesservice.RulesService;
 import io.rtdi.bigdata.rulesservice.config.RuleFileDefinition;
@@ -29,8 +26,6 @@ import jakarta.ws.rs.core.Response;
 @Path("/")
 public class RestServiceCalculate {
 	protected static final int SAMPLE_MAX_ROWS = 100;
-
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	@Context
 	private Configuration configuration;
@@ -79,12 +74,12 @@ public class RestServiceCalculate {
 			Integer stepindex,
 			@RequestBody RuleFileDefinition input) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			RuleStep ret = service.applySampleData(input, stepindex);
-			return LoggingUtil.requestEnd(log, request, ret);
+			return LoggingUtil.requestEnd(request, ret);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -119,12 +114,12 @@ public class RestServiceCalculate {
 	public Response processAll(
 			@RequestBody RuleFileDefinition input) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			RuleFileDefinition ret = service.applySampleFile(input);
-			return LoggingUtil.requestEnd(log, request, ret);
+			return LoggingUtil.requestEnd(request, ret);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 

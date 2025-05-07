@@ -9,12 +9,16 @@ sap.ui.define([
 			aggregations : {
 			},
 			events : {
-				"focusIn" : {"value": {type: "string"}}
+				"focusIn" : {"value": {type: "string"}},
+				"focusOut" : {"value": {type: "string"}},
 			}
 		},
 		renderer : {},
 		onfocusin : function() {
 			this.fireFocusIn({ "value" : this.getValue()});
+		},
+		onfocusout : function() {
+			this.fireFocusOut({ "value" : this.getValue()});
 		},
 	});
 });
