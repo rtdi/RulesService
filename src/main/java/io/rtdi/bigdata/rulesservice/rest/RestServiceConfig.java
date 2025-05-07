@@ -1,8 +1,5 @@
 package io.rtdi.bigdata.rulesservice.rest;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.rtdi.bigdata.rulesservice.LoggingUtil;
 import io.rtdi.bigdata.rulesservice.RulesService;
 import io.rtdi.bigdata.rulesservice.config.ServiceSettings;
@@ -29,8 +26,6 @@ import jakarta.ws.rs.core.Response;
 @Path("/")
 public class RestServiceConfig {
 	protected static final int SAMPLE_MAX_ROWS = 100;
-
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	@Context
 	private Configuration configuration;
@@ -70,13 +65,13 @@ public class RestServiceConfig {
 			})
 	public Response getConfig() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			boolean admin = request.isUserInRole(ServletSecurityConstants.ROLE_ADMIN);
 			ServiceSettings ret = service.getConfig(admin);
-			return LoggingUtil.requestEnd(log, request, ret);
+			return LoggingUtil.requestEnd(request, ret);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -110,12 +105,12 @@ public class RestServiceConfig {
 			})
 	public Response postConfig(@RequestBody ServiceSettings input) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			service.saveConfig(input);
-			return LoggingUtil.requestEnd(log, request, new SuccessResponse("Saved"));
+			return LoggingUtil.requestEnd(request, new SuccessResponse("Saved"));
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -149,12 +144,12 @@ public class RestServiceConfig {
 			})
 	public Response startService() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			service.startService();
-			return LoggingUtil.requestEnd(log, request, new SuccessResponse("Started"));
+			return LoggingUtil.requestEnd(request, new SuccessResponse("Started"));
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -188,12 +183,12 @@ public class RestServiceConfig {
 			})
 	public Response stopService() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			service.stopService();
-			return LoggingUtil.requestEnd(log, request, new SuccessResponse("Started"));
+			return LoggingUtil.requestEnd(request, new SuccessResponse("Started"));
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -225,12 +220,12 @@ public class RestServiceConfig {
 			})
 	public Response getServiceStatus() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			ServiceStatus ret = service.getServiceStatus();
-			return LoggingUtil.requestEnd(log, request, ret);
+			return LoggingUtil.requestEnd(request, ret);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 

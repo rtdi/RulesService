@@ -3,12 +3,18 @@ function(Controller) {"use strict";
 return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Config", {
 	onInit : function() {
 		var model = new sap.ui.model.json.JSONModel();
+		var statusbox = this.getView().byId("systemstatus");
+		model.attachRequestCompleted(function(event) {
+			if (event.getParameter("success")) {
+				statusbox.setVisible(true);
+			}
+		});
 		model.attachRequestFailed(function(event) {
 			var text = event.getParameter("responseText");
 			sap.m.MessageToast.show("Reading config failed: " + text);
 		});
-		model.loadData("../rest/config");
 		this.getView().setModel(model);
+		model.loadData("../rest/config");
 	},
 	onSave : function(event) {
 		var model = this.getView().getModel();
@@ -17,8 +23,11 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Config", {
 			var text = event.getParameter("responseText");
 			sap.m.MessageToast.show("Save failed: " + text);
 		});
-		post.attachRequestCompleted(function() {
+		post.attachRequestCompleted(function(event) {
 			console.log(post.getProperty("/"));
+			if (event.getParameter("success")) {
+				sap.m.MessageToast.show("Saved");
+			}
 		});
 		var json = JSON.stringify(model.getProperty("/"));
 		var headers = {
@@ -27,6 +36,10 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Config", {
 		post.loadData("../rest/config", json, true, "POST", false, true, headers);
 		model.loadData("../rest/config");
 	},
+	onRefresh : function(event) {
+		var model = this.getView().getModel();
+		model.loadData("../rest/config");
+	}
 });
 });
 

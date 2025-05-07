@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.rtdi.bigdata.rulesservice.LoggingUtil;
 import io.rtdi.bigdata.rulesservice.RulesService;
@@ -37,8 +34,6 @@ import jakarta.ws.rs.core.Response.Status;
 @Path("/")
 public class RestServiceSubjects {
 	protected static final int SAMPLE_MAX_ROWS = 100;
-
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	@Context
 	private Configuration configuration;
@@ -78,16 +73,16 @@ public class RestServiceSubjects {
 			})
 	public Response getSubjects() {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			Collection<String> subjects = service.getSubjects();
 			List<SubjectName> ret = new ArrayList<>();
 			for (String s : subjects) {
 				ret.add(new SubjectName(s));
 			}
-			return LoggingUtil.requestEnd(log, request, ret);
+			return LoggingUtil.requestEnd(request, ret);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -128,13 +123,13 @@ public class RestServiceSubjects {
 			String subjectname,
 			@RequestBody RuleFileDefinition input) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			RuleFileDefinition empty = RuleFileDefinition.createEmptyRuleFileDefinition(subjectname, service);
 			input.update(empty);
-			return LoggingUtil.requestEnd(log, request, input);
+			return LoggingUtil.requestEnd(request, input);
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 
@@ -174,19 +169,19 @@ public class RestServiceSubjects {
 					)
 			String subjectname) {
 		try {
-			LoggingUtil.logRequestBegin(log, request);
+			LoggingUtil.logRequestBegin(request);
 			RulesService service = RulesService.getRulesService(servletContext);
 			org.apache.avro.Schema schema = service.getLatestSchema(subjectname);
-			return LoggingUtil.requestEnd(log, request, schema);
+			return LoggingUtil.requestEnd(request, schema);
 		} catch (RestClientException e) {
 			if (e.getStatus() == 404) {
 				// invalid schema
-				return LoggingUtil.requestEndInputError(log, request, e, Status.NOT_FOUND);
+				return LoggingUtil.requestEndInputError(request, e, Status.NOT_FOUND);
 			} else {
-				return LoggingUtil.requestEndTechnicalError(log, request, e);
+				return LoggingUtil.requestEndTechnicalError(request, e);
 			}
 		} catch (Exception e) {
-			return LoggingUtil.requestEndTechnicalError(log, request, e);
+			return LoggingUtil.requestEndTechnicalError(request, e);
 		}
 	}
 

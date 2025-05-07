@@ -41,6 +41,8 @@ public class PrimitiveRule extends RuleWithName {
 	@Override
 	public RuleResult apply(Object value, AvroContainer container, boolean test) throws IOException {
 		try {
+			setConditionerror(null);
+			setSubstituteerror(null);
 			setSampleValue(value, test);
 			RuleResult result = calculateResult(container, test);
 			if (result != null) {
@@ -76,7 +78,6 @@ public class PrimitiveRule extends RuleWithName {
 			}
 			if (test) {
 				setSampleresult(result);
-				setConditionerror(null);
 			}
 			return result;
 		} catch (JexlException e) {
@@ -92,7 +93,17 @@ public class PrimitiveRule extends RuleWithName {
 	private RuleResult calculateResult(AvroContainer valuerecord, boolean test) throws IOException {
 		if (condition != null) {
 			RuleResult r = null;
-			Object o = condition.evaluate(valuerecord);
+			Object o = null;
+			if (test) {
+				try {
+					o = condition.evaluate(valuerecord);
+				} catch (PropertiesException e) {
+					setConditionerror(e.getMessage());
+					return RuleResult.FAIL;
+				}
+			} else {
+				o = condition.evaluate(valuerecord);
+			}
 			if (o != null && o instanceof Boolean) {
 				if (((Boolean) o).booleanValue()) {
 					r = RuleResult.PASS;
@@ -107,12 +118,12 @@ public class PrimitiveRule extends RuleWithName {
 							valuerecord.addChangedvalue(getFieldname(), substitutevalue);
 							if (test) {
 								setSampleoutput(Rule.valueToJavaObject(substitutevalue, getDataType()));
-								setSubstituteerror(null);
 							}
 						} catch (IOException e) {
 							if (test) {
 								setSampleoutput(null);
 								setSubstituteerror(getResultString(substitute.getExpression(), e));
+								return RuleResult.FAIL;
 							} else {
 								throw e;
 							}
@@ -122,6 +133,7 @@ public class PrimitiveRule extends RuleWithName {
 			} else {
 				if (test) {
 					setConditionerror("This rule expression does not return true/false");
+					return RuleResult.FAIL;
 				} else {
 					throw new PropertiesException("This rule expression does not return true/false", null, "A condition must return true/false", condition.getExpression());
 				}

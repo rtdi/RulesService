@@ -35,8 +35,8 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.common.KafkaFuture;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -64,7 +64,6 @@ import jakarta.servlet.annotation.WebListener;
  */
 @WebListener
 public class RulesService implements ServletContextListener {
-	protected final Logger log = LogManager.getLogger(this.getClass().getName());
 
 	private ScheduledExecutorService executor;
 	private CachedSchemaRegistryClient schemaclient;
@@ -78,7 +77,7 @@ public class RulesService implements ServletContextListener {
 	/**
 	 * Map<Inputtopic, Map<Instance Number, RuleFileKStream>>
 	 */
-	private Map<String, RuleFileKStream> services = new HashMap<>();
+	private Map<String, RuleFileTransformer> services = new HashMap<>();
 
 	/**
 	 * Default constructor.
@@ -102,7 +101,7 @@ public class RulesService implements ServletContextListener {
 	public long getRowsProduced() {
 		if (services != null) {
 			long count = 0L;
-			for (RuleFileKStream service : services.values()) {
+			for (RuleFileTransformer service : services.values()) {
 				count += service.getRowsprocessed();
 			}
 			return count;
@@ -122,7 +121,7 @@ public class RulesService implements ServletContextListener {
 	public Long getLastDataTimestamp() {
 		if (services != null) {
 			long ts = 0L;
-			for (RuleFileKStream service : services.values()) {
+			for (RuleFileTransformer service : services.values()) {
 				if (ts < service.getLastprocessedtimestamp()) {
 					ts = service.getLastprocessedtimestamp();
 				}
@@ -167,38 +166,38 @@ public class RulesService implements ServletContextListener {
 				Object o = envCtx.lookup("rulesettings");
 				if (o != null) {
 					settingsdir = Path.of(o.toString());
-					log.info("Found JNDI resource name <java:comp/env/rulesettings>, hence the settings directory is <{}>", settingsdir);
+					LoggingUtil.LOGGER.info("Found JNDI resource name <java:comp/env/rulesettings>, hence the settings directory is <{}>", settingsdir);
 				}
 			} catch (NamingException e) {
-				log.info("No JNDI resource found in the context.xml for name <java:comp/env/rulesettings>, hence using the default");
+				LoggingUtil.LOGGER.info("No JNDI resource found in the context.xml for name <java:comp/env/rulesettings>, hence using the default");
 			}
 			try {
 				Object o = envCtx.lookup("rulegroups");
 				if (o != null) {
 					rulefiledir = Path.of(o.toString());
-					log.info("Found JNDI resource name <java:comp/env/rulegroups>, hence the rules root directory is <{}>", rulefiledir);
+					LoggingUtil.LOGGER.info("Found JNDI resource name <java:comp/env/rulegroups>, hence the rules root directory is <{}>", rulefiledir);
 				}
 			} catch (NamingException e) {
-				log.info("No JNDI resource found in the context.xml for name <java:comp/env/rulegroups>, hence the default");
+				LoggingUtil.LOGGER.info("No JNDI resource found in the context.xml for name <java:comp/env/rulegroups>, hence the default");
 			}
 		} catch (Exception e) {
 			this.globalexception = e;
-			log.info("Exception when reading the webserver settings", e);
+			LoggingUtil.LOGGER.info("Exception when reading the webserver settings", e);
 		}
 		try {
 			if (settingsdir == null) {
 				settingsdir = Path.of("/apps/rulesservice/settings");
-				log.info("Settings directory is the default <{}>", settingsdir);
+				LoggingUtil.LOGGER.info("Settings directory is the default <{}>", settingsdir);
 			}
 			if (rulefiledir == null) {
 				rulefiledir = Path.of("/apps/rulesservice/definitions");
-				log.info("Rulefile directory is the default <{}>", rulefiledir);
+				LoggingUtil.LOGGER.info("Rulefile directory is the default <{}>", rulefiledir);
 			}
 			configure();
 			startService();
 		} catch (Exception e) {
 			this.globalexception = e;
-			log.info("Exception when reading the webserver settings", e);
+			LoggingUtil.LOGGER.info("Exception when reading the webserver settings", e);
 		}
 	}
 
@@ -207,13 +206,13 @@ public class RulesService implements ServletContextListener {
 		Map<String, TopicRule> topicrulefiles = getTopicRuleFiles();
 		for (Entry<String, TopicRule> entry : topicrulefiles.entrySet()) {
 			TopicRule r = entry.getValue();
-			RuleFileKStream rule = new RuleFileKStream(r.getRulefiles(), this, r.getInputtopicname(), r.getOutputtopicname(), r.getInstances());
+			RuleFileTransformer rule = new RuleFileTransformer(r.getRulefiles(), this, r.getInputtopicname(), r.getOutputtopicname(), r.getInstances());
 			if (rule.getRulefiledefinitions().size() > 0) {
 				services.put(r.getInputtopicname(), rule);
 				rule.start();
-				log.info("Thread for topic {} started", r.getInputtopicname());
+				LoggingUtil.LOGGER.info("Thread for topic {} started", r.getInputtopicname());
 			} else {
-				log.info("Topic {} has no active rules", r.getInputtopicname());
+				LoggingUtil.LOGGER.info("Topic {} has no active rules", r.getInputtopicname());
 			}
 		}
 	}
@@ -223,28 +222,28 @@ public class RulesService implements ServletContextListener {
 		Map<String, TopicRule> topicrules = getTopicRuleFiles();
 		TopicRule r = topicrules.get(topicname);
 		if (r != null) {
-			RuleFileKStream rule = new RuleFileKStream(r.getRulefiles(), this, r.getInputtopicname(), r.getOutputtopicname(), r.getInstances());
+			RuleFileTransformer rule = new RuleFileTransformer(r.getRulefiles(), this, r.getInputtopicname(), r.getOutputtopicname(), r.getInstances());
 			if (rule.getRulefiledefinitions().size() > 0) {
 				services.put(r.getInputtopicname(), rule);
 				rule.start();
-				log.info("Thread for topic {} started", r.getInputtopicname());
+				LoggingUtil.LOGGER.info("Thread for topic {} started", r.getInputtopicname());
 			} else {
-				log.info("Topic {} has no active rules", r.getInputtopicname());
+				LoggingUtil.LOGGER.info("Topic {} has no active rules", r.getInputtopicname());
 			}
 		}
 	}
 
 	public void startFailedServices() throws IOException {
-		for (Entry<String, RuleFileKStream> entry : services.entrySet()) {
-			RuleFileKStream stream = entry.getValue();
+		for (Entry<String, RuleFileTransformer> entry : services.entrySet()) {
+			RuleFileTransformer stream = entry.getValue();
 			if (! stream.isAlive()) {
-				RuleFileKStream rule = new RuleFileKStream(stream.getRulefiles(), this, stream.getInputtopicname(), stream.getOutputtopicname(), stream.getInstances());
+				RuleFileTransformer rule = new RuleFileTransformer(stream.getRulefiles(), this, stream.getInputtopicname(), stream.getOutputtopicname(), stream.getInstances());
 				if (rule.getRulefiledefinitions().size() > 0) {
 					services.put(rule.getInputtopicname(), rule);
 					rule.start();
-					log.info("Thread for topic {} re-started", rule.getInputtopicname());
+					LoggingUtil.LOGGER.info("Thread for topic {} re-started", rule.getInputtopicname());
 				} else {
-					log.info("Topic {} has no active rules", rule.getInputtopicname());
+					LoggingUtil.LOGGER.info("Topic {} has no active rules", rule.getInputtopicname());
 				}
 			}
 		}
@@ -258,7 +257,7 @@ public class RulesService implements ServletContextListener {
 		/*
 		 * Signal all to stop
 		 */
-		for (RuleFileKStream service : services.values()) {
+		for (RuleFileTransformer service : services.values()) {
 			service.interrupt();
 		}
 		/*
@@ -266,13 +265,13 @@ public class RulesService implements ServletContextListener {
 		 */
 		long until = System.currentTimeMillis() + 60000L;
 		while (System.currentTimeMillis() < until && services.size() > 0) {
-			Iterator<Entry<String, RuleFileKStream>> iter = services.entrySet().iterator();
+			Iterator<Entry<String, RuleFileTransformer>> iter = services.entrySet().iterator();
 			while (iter.hasNext()) {
-				Entry<String, RuleFileKStream> service = iter.next();
+				Entry<String, RuleFileTransformer> service = iter.next();
 				try {
 					if (service.getValue().join(Duration.ofSeconds(2))) {
 						iter.remove();
-						log.info("Thread for topic {} stopped", service.getKey());
+						LoggingUtil.LOGGER.info("Thread for topic {} stopped", service.getKey());
 					}
 				} catch (InterruptedException e) {
 					// NOOP as we have to close all resources, no matter what
@@ -282,7 +281,7 @@ public class RulesService implements ServletContextListener {
 	}
 
 	public void stopService(String topicname) throws IOException, InterruptedException {
-		RuleFileKStream service = services.get(topicname);
+		RuleFileTransformer service = services.get(topicname);
 		if (service != null) {
 			/*
 			 * Signal all to stop
@@ -293,7 +292,7 @@ public class RulesService implements ServletContextListener {
 			 */
 			if (service.join(Duration.ofSeconds(60))) {
 				services.remove(topicname);
-				log.info("Thread for topic {} stopped", topicname);
+				LoggingUtil.LOGGER.info("Thread for topic {} stopped", topicname);
 			}
 		}
 	}
@@ -306,15 +305,26 @@ public class RulesService implements ServletContextListener {
 		this.globalexception = null;
 		File propertiesfile = new File(settingsdir.toFile(), "kafka.properties");
 		if (!propertiesfile.isFile()) {
-			log.error("The mandatory kafka.properties file does not exist at <{}>", propertiesfile.toString());
+			LoggingUtil.LOGGER.error("The mandatory kafka.properties file does not exist at <{}>", propertiesfile.toString());
 			throw new IOException("The mandatory kafka.properties file does not exist at <" + propertiesfile.toString() + ">");
 		} else {
-			log.info("Found the kafka.properties file as <{}>", propertiesfile.toString());
+			LoggingUtil.LOGGER.info("Found the kafka.properties file at <{}>", propertiesfile.toString());
 		}
 		Properties kafkaproperties = new Properties();
 		try (InputStream is = new FileInputStream(propertiesfile)) {
 			kafkaproperties.load(is);
 		}
+		String loglevel = kafkaproperties.getProperty("ruleservice.loglevel");
+		if (loglevel != null) {
+			Level level = Level.getLevel(loglevel);
+			if (level != null) {
+				LoggingUtil.LOGGER.info("Setting the log level for the rules service to <{}>", level);
+				Configurator.setLevel(LoggingUtil.LOGGER.getName(), level);
+			} else {
+				LoggingUtil.LOGGER.warn("The log level <{}> is not valid, using the default", loglevel);
+			}
+		}
+
 		this.properties = Files.readString(settingsdir.resolve("kafka.properties"), StandardCharsets.UTF_8);
 		String schemaurls = kafkaproperties.getProperty("schema.registry.url");
 		if (schemaurls == null) {
@@ -325,7 +335,7 @@ public class RulesService implements ServletContextListener {
 		for (String url : urls) {
 			schemaRegistryUrls.add(url.trim());
 		}
-		propertiesmap = kafkaproperties.entrySet().stream().collect(
+		propertiesmap = kafkaproperties.entrySet().stream().filter(e -> e.getKey().toString().startsWith("ruleservice.") == false).collect(
 				Collectors.toMap(
 						e -> e.getKey().toString(),
 						e -> e.getValue().toString()
@@ -385,7 +395,7 @@ public class RulesService implements ServletContextListener {
 				settings.setSchemaregsubjects(schemas.size());
 				settings.setSchemaregconnected(true);
 			} catch (IOException | RestClientException e) {
-				log.error("getConfig() ran into an error", e);
+				LoggingUtil.LOGGER.error("getConfig() ran into an error", e);
 				globalexception = e;
 			}
 		}
@@ -396,7 +406,7 @@ public class RulesService implements ServletContextListener {
 				result.nodes().get(2, TimeUnit.SECONDS);
 				settings.setKafkaconnected(true);
 			} catch (Exception e) {
-				log.error("getConfig() ran into an error", e);
+				LoggingUtil.LOGGER.error("getConfig() ran into an error", e);
 				globalexception = e;
 			}
 		}
@@ -475,13 +485,13 @@ public class RulesService implements ServletContextListener {
 						topicrule.setModified(null);
 						topicrule.setInfo("saved");
 					} catch (IOException e) {
-						log.error("Failed to save the file for topic <{}>", topicrule.getInputtopicname(), e);
+						LoggingUtil.LOGGER.error("Failed to save the file for topic <{}>", topicrule.getInputtopicname(), e);
 						topicrule.setInfo("Failed to save the topic file (" + e.getMessage() + ")");
 					}
 					try {
 						startService(topicrule.getInputtopicname());
 					} catch (IOException | InterruptedException e) {
-						log.error("Failed to start the service for the topic <{}>", topicrule.getInputtopicname(), e);
+						LoggingUtil.LOGGER.error("Failed to start the service for the topic <{}>", topicrule.getInputtopicname(), e);
 						topicrule.setInfo("Failed to start the service for the topic <" + topicrule.getInputtopicname() + ">: " + e.getMessage());
 					}
 				}
@@ -507,24 +517,24 @@ public class RulesService implements ServletContextListener {
 	}
 
 	private void close() {
-		log.info("Closing all resources");
+		LoggingUtil.LOGGER.info("Closing all resources");
 		try {
 			stopService();
 		} catch (IOException e) {
-			log.error("Stopping the services failed - ignored", e);
+			LoggingUtil.LOGGER.error("Stopping the services failed - ignored", e);
 		}
 		if (admin != null) {
 			try {
 				admin.close(Duration.ofSeconds(10));
 			} catch (Exception e) {
-				log.error("Closing the Kafka admin client within 10 seconds failed - ignored", e);
+				LoggingUtil.LOGGER.error("Closing the Kafka admin client within 10 seconds failed - ignored", e);
 			}
 		}
 		if (schemaclient != null) {
 			try {
 				schemaclient.close();
 			} catch (Exception e) {
-				log.error("Closing the schema registry client failed - ignored", e);
+				LoggingUtil.LOGGER.error("Closing the schema registry client failed - ignored", e);
 			}
 		}
 	}
@@ -572,7 +582,7 @@ public class RulesService implements ServletContextListener {
 		return schemaclient;
 	}
 
-	public Map<String, RuleFileKStream> getServices() {
+	public Map<String, RuleFileTransformer> getServices() {
 		return services;
 	}
 

@@ -11,7 +11,7 @@ public class ServiceSettings {
 	private boolean servicerunning;
 	private String errormessage;
 	private boolean adminuser;
-	private static final String propertieshelp = "The properties must contain info to connect to the schema registry (read/write) and create a Kafka KStream";
+	private static final String propertieshelp = "The properties must contain info to connect to the schema registry and topics (read/write)";
 
 	public String getProperties() {
 		if (properties != null) {

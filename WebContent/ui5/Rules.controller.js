@@ -46,6 +46,10 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rules", {
 		
 		var ruleurl = url.replace("Rules.html", "Rule.html?subject=" + encodeURI(subjectname) + rulelink);
 		window.open(ruleurl, "_blank");
+	},
+	onRefresh : function(event) {
+		var model = this.getView().getModel();
+		model.loadData("../rest/subjects");
 	}
 });
 });

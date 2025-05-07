@@ -6,13 +6,14 @@
 			<tnt:ToolHeader>
 				<Text text="Rulesservice" />
 				<ToolbarSpacer/>
+				<Button icon="sap-icon://refresh" press="onRefresh" />
 				<Button text="Save" press="onSave" visible="{/admin}" />
 			</tnt:ToolHeader>
 		</controls:header>
 		<controls:mainContents>
 			<VBox>
 				<Text text="{/errormessage}" />
-				<HBox>
+				<HBox id="systemstatus" visible="false" >
 					<ObjectStatus
 								text="Kafka"
 								inverted="true"

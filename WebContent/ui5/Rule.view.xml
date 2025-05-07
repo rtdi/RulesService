@@ -113,8 +113,8 @@
 									                <controls:FocusInput value="{condition}" 
 									                	valueState="{= (${conditionerror} ? 'Error' : 'None') }"
 									                	valueStateText="{conditionerror}"
-									                	liveChange=".onConditionChange"
-									                	focusIn=".onConditionChange"
+									                	tooltip="{conditionerror}"
+									                	focusOut=".onConditionChange"
 									                	visible="{= ${type} === 'PrimitiveRule' }"
 									                />
 									            </t:template>
@@ -137,9 +137,8 @@
 									                <controls:FocusInput value="{substitute}" 
 									                	valueState="{= (${substituteerror} ? 'Error' : 'None') }"
 									                	valueStateText="{substituteerror}"
-									                	tooltip="{substituteresult}"
-									                	liveChange=".onSubstituteChange"
-									                	focusIn=".onSubstituteChange"
+									                	tooltip="{substituteerror}"
+									                	focusOut=".onSubstituteChange"
 									                	visible="{= ${type} === 'PrimitiveRule' &amp;&amp; !!${fieldname} }"
 									                />
 									            </t:template>
@@ -164,7 +163,7 @@
 						</items>
 					</TabContainer>
 				</Panel>
-				<Title id="formulaeditorlabel" text="Rule Formula"/>
+				<Title id="formulaeditorlabel" text="Rule Formula for:"/>
 				<ce:CodeEditor id="formulaeditor" type="text" editable="false" liveChange=".onEditorChange" >
 					<ce:layoutData>
 						<FlexItemData growFactor="1" />

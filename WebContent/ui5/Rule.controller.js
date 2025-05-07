@@ -130,13 +130,16 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rule", {
 		var model = this.getView().getModel();
 		var newrulename = model.getProperty("/name");
 		var post = new sap.ui.model.json.JSONModel();
-		post.attachRequestCompleted(function() {
+		post.attachRequestCompleted(function(event) {
 			console.log(post.getProperty("/"));
-			if (rulename !== newrulename) {
-				const url = new URL(window.location)
-				url.searchParams.set("rule", newrulename);
-				url.searchParams.delete("new");
-				history.pushState(null, '', url);
+			if (event.getParameter("success")) {
+				if (rulename !== newrulename) {
+					const url = new URL(window.location)
+					url.searchParams.set("rule", newrulename);
+					url.searchParams.delete("new");
+					history.pushState(null, '', url);
+				}
+				sap.m.MessageToast.show("Saved");
 			}
 		});
 		post.attachRequestFailed(function(event) {
@@ -153,11 +156,14 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rule", {
 		}
 		post.loadData("../rest/subjects/" + encodeURI(subjectname) + "/rules/" + rulename, json, true, "POST", false, true, headers);
 	},
-	onActivate : function(event) {
+	onActivate : function() {
 		var rulename = jQuery.sap.getUriParameters().get("rule");
 		var post = new sap.ui.model.json.JSONModel();
-		post.attachRequestCompleted(function() {
+		post.attachRequestCompleted(function(event) {
 			console.log(post.getProperty("/"));
+			if (event.getParameter("success")) {
+				sap.m.MessageToast.show("Activated");
+			}
 		});
 		post.attachRequestFailed(function(event) {
 			var text = event.getParameter("responseText");
@@ -176,6 +182,8 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rule", {
 		editor.setValue(event.getParameter("value"));
 		editor.setEditable(true);
 		editor.data("path", rulepath + "/condition");
+		var label = this.getView().byId("formulaeditorlabel");
+		label.setText("Rule Formula for: " + rulepath);
 	},
 	onSubstituteChange: function(event) {
 		var source = event.getSource();
@@ -184,6 +192,8 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rule", {
 		editor.setValue(event.getParameter("value"));
 		editor.setEditable(true);
 		editor.data("path", rulepath + "/substitute");
+		var label = this.getView().byId("formulaeditorlabel");
+		label.setText("Rule Formula for: " + rulepath);
 	},
 	onEditorChange: function(event) {
 		var source = event.getSource();
@@ -226,6 +236,7 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Rule", {
 			var successful = event.getParameter("success");
 			if (successful) {
 				model.setProperty("/rulesteps/" + stepindex + "/", stepmodel.getProperty("/"));
+				sap.m.MessageToast.show("Recalculated");
 			}
 		});
 		stepmodel.loadData("../rest/calculate/" + stepindex, json, true, "POST", false, true, headers);
