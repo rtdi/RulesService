@@ -529,6 +529,7 @@ public class RulesService implements ServletContextListener {
 			} catch (Exception e) {
 				LoggingUtil.LOGGER.error("Closing the Kafka admin client within 10 seconds failed - ignored", e);
 			}
+			admin = null;
 		}
 		if (schemaclient != null) {
 			try {
@@ -536,6 +537,7 @@ public class RulesService implements ServletContextListener {
 			} catch (Exception e) {
 				LoggingUtil.LOGGER.error("Closing the schema registry client failed - ignored", e);
 			}
+			schemaclient = null;
 		}
 	}
 
