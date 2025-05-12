@@ -27,6 +27,7 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Config", {
 			console.log(post.getProperty("/"));
 			if (event.getParameter("success")) {
 				sap.m.MessageToast.show("Saved");
+				model.loadData("../rest/config");
 			}
 		});
 		var json = JSON.stringify(model.getProperty("/"));
@@ -34,7 +35,6 @@ return Controller.extend("io.rtdi.bigdata.rulesservice.ui5.Config", {
 			"Content-Type": "application/json;charset=utf-8"
 		}
 		post.loadData("../rest/config", json, true, "POST", false, true, headers);
-		model.loadData("../rest/config");
 	},
 	onRefresh : function(event) {
 		var model = this.getView().getModel();
